@@ -1,5 +1,11 @@
 {
-  "generated_at": null,
-  "summary": {},
+  "generated_at": "2026-04-21T19:06:05+00:00",
+  "summary": {
+    "total": 0,
+    "wins": null,
+    "losses": null,
+    "pushes": null,
+    "units": null
+  },
   "picks": []
 }
