@@ -1,0 +1,14 @@
+{
+  "min_ev": 0.05,
+  "min_odds": 1.5,
+  "max_odds": 3.0,
+  "markets": ["player_points", "player_rebounds", "player_assists", "player_threes"],
+  "max_events_per_day": 5,
+  "kelly_fraction": 0.25,
+  "regions": "us",
+  "bookmakers": ["fanduel", "draftkings", "betmgm"],
+  "chat_ids": [],
+  "last_update_id": 0,
+  "min_games_history": 5,
+  "lookback_games": 10
+}

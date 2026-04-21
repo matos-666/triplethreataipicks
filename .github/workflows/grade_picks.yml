@@ -1,0 +1,39 @@
+name: Grade Yesterday's Picks
+
+on:
+  schedule:
+    # 14:00 UTC = grades after all games from previous day are final
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nba-grade
+  cancel-in-progress: false
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Grade picks
+        run: python -m src.grade
+
+      - name: Commit data
+        run: |
+          git config user.name "nba-bot"
+          git config user.email "nba-bot@users.noreply.github.com"
+          git add data/history.db pages/history.json || true
+          git diff --cached --quiet || git commit -m "grade picks: $(date -u +%Y-%m-%d)"
+          git push || true

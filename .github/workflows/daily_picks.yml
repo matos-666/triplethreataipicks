@@ -1,0 +1,44 @@
+name: Daily NBA Picks
+
+on:
+  schedule:
+    # 16:00 UTC daily = ~12:00 ET / 17:00 Lisboa — a few hours before typical NBA tip-offs
+    - cron: "0 16 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: nba-picks
+  cancel-in-progress: false
+
+jobs:
+  picks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run daily picks
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python -m src.picks
+
+      - name: Commit data
+        run: |
+          git config user.name "nba-bot"
+          git config user.email "nba-bot@users.noreply.github.com"
+          git add data/history.db pages/history.json settings.json || true
+          git diff --cached --quiet || git commit -m "daily picks: $(date -u +%Y-%m-%d)"
+          git push || true
