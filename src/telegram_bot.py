@@ -54,6 +54,9 @@ def broadcast(text: str) -> None:
         send(int(cid), text)
 
 
+TG_MAX = 3800  # stay under 4096 hard limit with headroom
+
+
 def send_picks(picks: list[dict]) -> None:
     s = config.load()
     chat_ids = s.get("chat_ids", [])
@@ -65,25 +68,40 @@ def send_picks(picks: list[dict]) -> None:
         for cid in chat_ids:
             send(int(cid), msg)
         return
-    msg = _format_picks(picks)
+    chunks = _chunk_picks(picks)
     for cid in chat_ids:
-        send(int(cid), msg)
+        for i, chunk in enumerate(chunks):
+            send(int(cid), chunk)
 
 
-def _format_picks(picks: list[dict]) -> str:
-    lines = [f"<b>🏀 NBA Props — {picks[0].get('game_date','hoje')}</b>", f"<i>{len(picks)} pick(s) acima do EV mínimo</i>", ""]
+def _pick_line(p: dict) -> str:
+    market = p["market"].replace("player_", "").replace("_", "+")
+    ev_pct = p["ev"] * 100
+    kelly_pct = (p.get("kelly") or 0) * 100
+    return (
+        f"• <b>{html.escape(p['player_name'])}</b> {p['side']} {p['line']} {market}\n"
+        f"  @ {p['decimal_odds']:.2f} ({p['bookmaker']}) — "
+        f"<b>EV {ev_pct:+.1f}%</b> | Kelly {kelly_pct:.1f}%\n"
+        f"  <i>modelo: {p['model_mean']:.1f} ± {p['model_std']:.1f} ({p['n_games']} jogos) | p={p['model_prob']:.2f}</i>"
+    )
+
+
+def _chunk_picks(picks: list[dict]) -> list[str]:
+    header = f"<b>🏀 NBA Props — {picks[0].get('game_date','hoje')}</b>\n<i>{len(picks)} pick(s) acima do EV mínimo</i>\n\n"
+    footer = "\n<i>Apostas envolvem risco. Aposta com responsabilidade.</i>"
+    chunks: list[str] = []
+    buf = header
+    first = True
     for p in picks:
-        market = p["market"].replace("player_", "").replace("_", "+")
-        ev_pct = p["ev"] * 100
-        kelly_pct = (p.get("kelly") or 0) * 100
-        lines.append(
-            f"• <b>{html.escape(p['player_name'])}</b> {p['side']} {p['line']} {market}\n"
-            f"  @ {p['decimal_odds']:.2f} ({p['bookmaker']}) — "
-            f"<b>EV {ev_pct:+.1f}%</b> | Kelly {kelly_pct:.1f}%\n"
-            f"  <i>modelo: {p['model_mean']:.1f} ± {p['model_std']:.1f} ({p['n_games']} jogos) | p={p['model_prob']:.2f}</i>"
-        )
-    lines.append("\n<i>Apostas envolvem risco. Aposta com responsabilidade.</i>")
-    return "\n".join(lines)
+        line = _pick_line(p) + "\n"
+        if len(buf) + len(line) + len(footer) > TG_MAX:
+            chunks.append(buf.rstrip() + (footer if not chunks else ""))
+            buf = f"<b>(cont.)</b>\n"
+        buf += line
+        first = False
+    if buf.strip():
+        chunks.append(buf.rstrip() + (footer if len(chunks) == 0 else ""))
+    return chunks
 
 
 # ────────────────────────────────────────────────────────────────────
