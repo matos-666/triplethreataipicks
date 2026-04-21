@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: nba-grade
@@ -37,3 +39,9 @@ jobs:
           git add data/history.db pages/history.json || true
           git diff --cached --quiet || git commit -m "grade picks: $(date -u +%Y-%m-%d)"
           git push || true
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+      - uses: actions/deploy-pages@v4

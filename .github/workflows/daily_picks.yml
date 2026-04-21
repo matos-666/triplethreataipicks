@@ -42,3 +42,9 @@ jobs:
           git add data/history.db pages/history.json settings.json || true
           git diff --cached --quiet || git commit -m "daily picks: $(date -u +%Y-%m-%d)"
           git push || true
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+      - uses: actions/deploy-pages@v4
