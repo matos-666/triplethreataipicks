@@ -1,8 +1,15 @@
-"""NBA stats via nba_api. Per-player recent game logs with rolling mean/std.
+"""NBA stats via ESPN public API.
 
-Uses a local cache for player index to avoid hitting the API repeatedly. If
-nba_api is blocked from the runner IP, pipeline degrades gracefully (player
-skipped).
+ESPN's site.api.espn.com endpoints are unauthenticated and not blocked from
+cloud IPs (unlike stats.nba.com). We hit three endpoints:
+
+ - teams + rosters         → build name → athlete_id index (cached)
+ - athletes/{id}/gamelog   → recent game stats per player
+ - scoreboard + summary    → box scores for grading
+
+Public module surface: MARKET_TO_STAT, POISSON_MARKETS, find_player_id,
+fetch_player_recent, fetch_box_score, find_game_id_by_date_and_teams,
+current_season, PlayerRecent.
 """
 from __future__ import annotations
 
@@ -15,22 +22,19 @@ from functools import lru_cache
 from typing import Iterable
 
 import numpy as np
+import requests
 
 log = logging.getLogger(__name__)
 
-# nba_api headers: emulate a browser so stats.nba.com doesn't 403 us.
-_HEADERS = {
+ESPN = "https://site.api.espn.com/apis"
+HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     ),
-    "Referer": "https://www.nba.com/",
-    "Origin": "https://www.nba.com",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Connection": "keep-alive",
+    "Accept": "application/json",
 }
 
-# Map Odds API market keys to nba_api stat columns.
 MARKET_TO_STAT: dict[str, tuple[str, ...]] = {
     "player_points": ("PTS",),
     "player_rebounds": ("REB",),
@@ -45,7 +49,6 @@ MARKET_TO_STAT: dict[str, tuple[str, ...]] = {
     "player_rebounds_assists": ("REB", "AST"),
 }
 
-# Markets where a Poisson assumption fits better than Normal (low-count integer).
 POISSON_MARKETS = {"player_threes", "player_blocks", "player_steals", "player_turnovers"}
 
 
@@ -54,30 +57,20 @@ def _strip_accents(s: str) -> str:
 
 
 def _normalize(name: str) -> str:
-    return _strip_accents(name).lower().replace(".", "").replace("'", "").strip()
+    return _strip_accents(name).lower().replace(".", "").replace("'", "").replace("-", " ").strip()
 
 
-@lru_cache(maxsize=1)
-def _player_index() -> dict[str, int]:
-    from nba_api.stats.static import players as _players
-    idx: dict[str, int] = {}
-    for p in _players.get_players():
-        if not p.get("is_active"):
-            continue
-        key = _normalize(p["full_name"])
-        idx[key] = p["id"]
-    return idx
-
-
-def find_player_id(name: str) -> int | None:
-    idx = _player_index()
-    n = _normalize(name)
-    if n in idx:
-        return idx[n]
-    # Try last-name fallback (e.g. "Shai Gilgeous-Alexander")
-    for k, v in idx.items():
-        if k.endswith(n.split()[-1]) and k.split()[0][0] == n.split()[0][0]:
-            return v
+def _get(url: str, params: dict | None = None, timeout: int = 20, retries: int = 3) -> dict | None:
+    last = None
+    for i in range(retries):
+        try:
+            r = requests.get(url, params=params, headers=HEADERS, timeout=timeout)
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            last = e
+            time.sleep(1 + i)
+    log.warning("ESPN GET failed %s: %s", url, last)
     return None
 
 
@@ -89,10 +82,65 @@ def current_season() -> str:
     return f"{y - 1}-{str(y)[-2:]}"
 
 
+# ────────────────────────────────────────────────────────────────────
+# Player index
+# ────────────────────────────────────────────────────────────────────
+
+@lru_cache(maxsize=1)
+def _player_index() -> dict[str, int]:
+    """Build {normalized_name: espn_athlete_id} from the 30 team rosters."""
+    idx: dict[str, int] = {}
+    teams = _get(f"{ESPN}/site/v2/sports/basketball/nba/teams", params={"limit": 50})
+    if not teams:
+        return idx
+    team_list = teams["sports"][0]["leagues"][0]["teams"]
+    for t in team_list:
+        tid = t["team"]["id"]
+        roster = _get(f"{ESPN}/site/v2/sports/basketball/nba/teams/{tid}/roster")
+        if not roster:
+            continue
+        for a in roster.get("athletes", []):
+            aid = int(a["id"])
+            names = [a.get("fullName"), a.get("displayName"), a.get("shortName")]
+            for n in names:
+                if n:
+                    idx[_normalize(n)] = aid
+    log.info("ESPN player index built: %d entries", len(idx))
+    return idx
+
+
+def find_player_id(name: str) -> int | None:
+    idx = _player_index()
+    n = _normalize(name)
+    if n in idx:
+        return idx[n]
+    # Tolerant fallback: last-name + first-initial match
+    parts = n.split()
+    if len(parts) >= 2:
+        first, last = parts[0], parts[-1]
+        for k, v in idx.items():
+            kp = k.split()
+            if len(kp) >= 2 and kp[-1] == last and kp[0].startswith(first[0]):
+                return v
+    return None
+
+
+# ────────────────────────────────────────────────────────────────────
+# Gamelog
+# ────────────────────────────────────────────────────────────────────
+
+# ESPN top-level `names` order for box stats (per game in `events[].stats`):
+#   0 minutes, 1 FG(m-a), 2 FG%, 3 3PT(m-a), 4 3P%, 5 FT(m-a), 6 FT%,
+#   7 totalRebounds, 8 assists, 9 blocks, 10 steals, 11 fouls,
+#   12 turnovers, 13 points
+_STAT_IDX = {"REB": 7, "AST": 8, "BLK": 9, "STL": 10, "TOV": 12, "PTS": 13}
+_MADE_ATT_IDX = {"FG3M": 3}  # "3-7" → 3
+
+
 @dataclass
 class PlayerRecent:
     player_id: int
-    games: list[dict]     # most recent first
+    games: list[dict]   # newest first, {stat_key: value, game_date: iso}
 
     def values(self, stat_cols: Iterable[str], n: int) -> np.ndarray:
         arr = []
@@ -101,82 +149,115 @@ class PlayerRecent:
         return np.array(arr, dtype=float)
 
 
-def fetch_player_recent(player_id: int, n: int = 20, max_retries: int = 3) -> PlayerRecent | None:
-    """Fetch last `n` regular-season games for a player."""
-    from nba_api.stats.endpoints import playergamelog
-    season = current_season()
-    last_err = None
-    for attempt in range(max_retries):
+def _parse_stats_row(stats: list[str]) -> dict[str, float]:
+    """Convert ESPN stats row (list of strings, possibly 'm-a') into dict."""
+    out: dict[str, float] = {}
+    for key, i in _STAT_IDX.items():
         try:
-            gl = playergamelog.PlayerGameLog(
-                player_id=player_id,
-                season=season,
-                headers=_HEADERS,
-                timeout=30,
-            )
-            df = gl.get_data_frames()[0]
-            if df.empty:
-                # Try previous season as fallback (off-season or rookie)
-                prev = f"{int(season[:4]) - 1}-{season[:4][-2:]}"
-                gl = playergamelog.PlayerGameLog(
-                    player_id=player_id, season=prev, headers=_HEADERS, timeout=30,
-                )
-                df = gl.get_data_frames()[0]
-            if df.empty:
-                return None
-            games = df.head(n).to_dict(orient="records")
-            return PlayerRecent(player_id=player_id, games=games)
-        except Exception as e:
-            last_err = e
-            log.warning("nba_api retry %d for pid=%s: %s", attempt + 1, player_id, e)
-            time.sleep(2 + attempt * 2)
-    log.error("nba_api failed for pid=%s: %s", player_id, last_err)
-    return None
-
-
-def fetch_box_score(game_id: str, max_retries: int = 3) -> dict[int, dict] | None:
-    """Return {player_id: {stat: value}} for a finished game."""
-    from nba_api.stats.endpoints import boxscoretraditionalv2
-    last_err = None
-    for attempt in range(max_retries):
+            out[key] = float(stats[i]) if stats[i] != "" else 0.0
+        except (ValueError, IndexError):
+            out[key] = 0.0
+    for key, i in _MADE_ATT_IDX.items():
         try:
-            bx = boxscoretraditionalv2.BoxScoreTraditionalV2(
-                game_id=game_id, headers=_HEADERS, timeout=30,
-            )
-            df = bx.player_stats.get_data_frame()
-            out: dict[int, dict] = {}
-            for _, row in df.iterrows():
-                out[int(row["PLAYER_ID"])] = {
-                    "PTS": float(row.get("PTS") or 0),
-                    "REB": float(row.get("REB") or 0),
-                    "AST": float(row.get("AST") or 0),
-                    "FG3M": float(row.get("FG3M") or 0),
-                    "BLK": float(row.get("BLK") or 0),
-                    "STL": float(row.get("STL") or 0),
-                    "TOV": float(row.get("TO") or row.get("TOV") or 0),
-                }
-            return out
-        except Exception as e:
-            last_err = e
-            time.sleep(2 + attempt * 2)
-    log.error("boxscore failed for %s: %s", game_id, last_err)
-    return None
+            v = stats[i]
+            made = v.split("-")[0] if "-" in v else v
+            out[key] = float(made) if made else 0.0
+        except (ValueError, IndexError):
+            out[key] = 0.0
+    return out
 
+
+def fetch_player_recent(player_id: int, n: int = 20) -> PlayerRecent | None:
+    """Fetch last `n` regular/post-season games for an ESPN athlete id."""
+    data = _get(f"{ESPN}/common/v3/sports/basketball/nba/athletes/{player_id}/gamelog")
+    if not data:
+        return None
+    events_meta = data.get("events", {})
+    games: list[dict] = []
+    # Regular + Post season, skip preseason.
+    for st in data.get("seasonTypes", []):
+        name = (st.get("displayName") or "").lower()
+        if "preseason" in name:
+            continue
+        for cat in st.get("categories", []):
+            for ev in cat.get("events", []):
+                eid = ev.get("eventId")
+                meta = events_meta.get(eid, {})
+                parsed = _parse_stats_row(ev.get("stats", []))
+                parsed["game_date"] = meta.get("gameDate", "")
+                parsed["event_id"] = eid
+                games.append(parsed)
+    if not games:
+        return None
+    # Sort newest first by ISO date string.
+    games.sort(key=lambda g: g.get("game_date") or "", reverse=True)
+    return PlayerRecent(player_id=player_id, games=games[: n * 2][:n])
+
+
+# ────────────────────────────────────────────────────────────────────
+# Box score lookup (for grading)
+# ────────────────────────────────────────────────────────────────────
 
 def find_game_id_by_date_and_teams(date_iso: str, home_team: str, away_team: str) -> str | None:
-    """Given a date (YYYY-MM-DD) and team names, return nba.com game id."""
-    from nba_api.stats.endpoints import scoreboardv2
-    try:
-        sb = scoreboardv2.ScoreboardV2(game_date=date_iso, headers=_HEADERS, timeout=30)
-        games = sb.game_header.get_data_frame()
-        teams = sb.line_score.get_data_frame()
-    except Exception as e:
-        log.error("scoreboard failed for %s: %s", date_iso, e)
+    """Return ESPN event id for the NBA game matching date + teams."""
+    yyyymmdd = date_iso.replace("-", "")
+    sb = _get(f"{ESPN}/site/v2/sports/basketball/nba/scoreboard", params={"dates": yyyymmdd})
+    if not sb:
         return None
-    for _, g in games.iterrows():
-        gid = g["GAME_ID"]
-        rows = teams[teams["GAME_ID"] == gid]
-        names = " ".join(rows["TEAM_NAME"].astype(str).tolist()).lower()
-        if home_team.split()[-1].lower() in names and away_team.split()[-1].lower() in names:
-            return gid
+    target_home = _normalize(home_team).split()[-1]
+    target_away = _normalize(away_team).split()[-1]
+    for ev in sb.get("events", []):
+        comp = (ev.get("competitions") or [{}])[0]
+        names = " ".join(
+            _normalize(c.get("team", {}).get("displayName") or "")
+            for c in comp.get("competitors", [])
+        )
+        if target_home in names and target_away in names:
+            return ev["id"]
     return None
+
+
+def fetch_box_score(game_id: str) -> dict[int, dict] | None:
+    """Return {athlete_id: {stat: value}} for a finished game."""
+    data = _get(
+        f"{ESPN}/site/v2/sports/basketball/nba/summary",
+        params={"event": game_id},
+    )
+    if not data:
+        return None
+    out: dict[int, dict] = {}
+    boxscore = data.get("boxscore") or {}
+    for team in boxscore.get("players", []):
+        for statblock in team.get("statistics", []):
+            keys = statblock.get("keys") or statblock.get("names") or []
+            # ESPN sometimes uses identical ordering to top-level gamelog names.
+            for a in statblock.get("athletes", []):
+                ath = a.get("athlete") or {}
+                try:
+                    aid = int(ath.get("id"))
+                except (TypeError, ValueError):
+                    continue
+                stats = a.get("stats") or []
+                # Map by keys when present, fallback to index layout.
+                row: dict[str, float] = {}
+                if keys and len(keys) == len(stats):
+                    key_to_val = dict(zip(keys, stats))
+                    row["PTS"] = _f(key_to_val.get("points"))
+                    row["REB"] = _f(key_to_val.get("totalRebounds") or key_to_val.get("rebounds"))
+                    row["AST"] = _f(key_to_val.get("assists"))
+                    row["BLK"] = _f(key_to_val.get("blocks"))
+                    row["STL"] = _f(key_to_val.get("steals"))
+                    row["TOV"] = _f(key_to_val.get("turnovers"))
+                    threes = key_to_val.get("threePointFieldGoalsMade-threePointFieldGoalsAttempted", "")
+                    row["FG3M"] = _f(str(threes).split("-")[0] if "-" in str(threes) else threes)
+                else:
+                    row = _parse_stats_row(stats)
+                out[aid] = row
+    return out if out else None
+
+
+def _f(v) -> float:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
