@@ -74,8 +74,10 @@ def _notify_results(date: str) -> None:
             (date,),
         ).fetchall()
     if not rows:
+        log.info("no graded picks to notify for %s", date)
         return
     picks = [dict(r) for r in rows]
+    log.info("notifying %d graded picks to Telegram", len(picks))
     wins = sum(1 for p in picks if p["result"] == "WIN")
     losses = sum(1 for p in picks if p["result"] == "LOSS")
     pushes = sum(1 for p in picks if p["result"] == "PUSH")
