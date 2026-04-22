@@ -23,8 +23,9 @@ def run(date: str | None = None) -> int:
     with db.connect() as conn:
         pending = db.ungraded_picks(conn, date)
         if not pending:
-            log.info("nothing to grade")
+            log.info("nothing new to grade")
             _write_history()
+            _notify_results(date)
             return 0
 
         # Group by event so we fetch box score once per game.
