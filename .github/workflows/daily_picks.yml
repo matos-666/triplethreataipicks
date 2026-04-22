@@ -2,8 +2,8 @@ name: Daily NBA Picks
 
 on:
   schedule:
-    # 16:00 UTC daily = ~12:00 ET / 17:00 Lisboa — a few hours before typical NBA tip-offs
-    - cron: "0 16 * * *"
+    # 13:00 UTC daily = 14:00 Lisboa (WEST summer). Winter: 1h mais cedo que esperado.
+    - cron: "0 13 * * *"
   workflow_dispatch:
 
 permissions:

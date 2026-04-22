@@ -57,6 +57,24 @@ def broadcast(text: str) -> None:
 TG_MAX = 3800  # stay under 4096 hard limit with headroom
 
 
+def _chunk_text(text: str) -> list[str]:
+    """Split arbitrary text into Telegram-safe chunks, preferring line breaks."""
+    if len(text) <= TG_MAX:
+        return [text]
+    chunks: list[str] = []
+    buf = ""
+    for line in text.split("\n"):
+        if len(buf) + len(line) + 1 > TG_MAX:
+            if buf:
+                chunks.append(buf.rstrip())
+            buf = line + "\n"
+        else:
+            buf += line + "\n"
+    if buf.strip():
+        chunks.append(buf.rstrip())
+    return chunks
+
+
 def send_picks(picks: list[dict]) -> None:
     s = config.load()
     chat_ids = s.get("chat_ids", [])

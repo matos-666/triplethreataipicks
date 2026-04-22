@@ -7,7 +7,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from src import db, stats
+from src import db, stats, telegram_bot
 
 log = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
@@ -59,7 +59,50 @@ def run(date: str | None = None) -> int:
                 log.info("%s %s %s %s -> %s (actual=%s)", p["player_name"], p["side"], line, p["market"], result, actual)
 
     _write_history()
+    _notify_results(date)
     return graded
+
+
+def _notify_results(date: str) -> None:
+    """Send a Telegram summary of picks graded on `date`."""
+    import html as _html
+    with db.connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM picks WHERE game_date = ? AND result IS NOT NULL "
+            "ORDER BY result, ev DESC",
+            (date,),
+        ).fetchall()
+    if not rows:
+        return
+    picks = [dict(r) for r in rows]
+    wins = sum(1 for p in picks if p["result"] == "WIN")
+    losses = sum(1 for p in picks if p["result"] == "LOSS")
+    pushes = sum(1 for p in picks if p["result"] == "PUSH")
+    units = sum(
+        (p["decimal_odds"] - 1) if p["result"] == "WIN" else (-1 if p["result"] == "LOSS" else 0)
+        for p in picks
+    )
+    header = (
+        f"<b>📊 Resultados {date}</b>\n"
+        f"{wins}W — {losses}L — {pushes}P | Unidades: {units:+.2f}\n\n"
+    )
+    lines = []
+    for p in picks:
+        emoji = {"WIN": "✅", "LOSS": "❌", "PUSH": "➖"}.get(p["result"], "•")
+        market = p["market"].replace("player_", "").replace("_", "+")
+        actual = p.get("actual_value")
+        lines.append(
+            f"{emoji} <b>{_html.escape(p['player_name'])}</b> {p['side']} {p['line']} {market} "
+            f"@ {p['decimal_odds']:.2f} → {actual if actual is not None else '?'}"
+        )
+    body = "\n".join(lines)
+    msg = header + body
+    # Reuse the chunker in case there are many graded picks.
+    chunks = telegram_bot._chunk_text(msg)
+    s = telegram_bot.config.load()
+    for cid in s.get("chat_ids", []):
+        for c in chunks:
+            telegram_bot.send(int(cid), c)
 
 
 def _event_key(p) -> str:

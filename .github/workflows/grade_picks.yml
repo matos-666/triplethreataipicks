@@ -2,8 +2,8 @@ name: Grade Yesterday's Picks
 
 on:
   schedule:
-    # 14:00 UTC = grades after all games from previous day are final
-    - cron: "0 14 * * *"
+    # 11:00 UTC = 12:00 Lisboa (WEST summer). Todos os jogos da noite anterior já finais.
+    - cron: "0 11 * * *"
   workflow_dispatch:
 
 permissions:
