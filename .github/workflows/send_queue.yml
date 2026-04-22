@@ -1,0 +1,53 @@
+name: Send Queued Picks
+
+on:
+  schedule:
+    # De 15 em 15 minutos das 13:00 às 20:00 UTC (14h-21h Lisboa)
+    - cron: "0,15,30,45 13-20 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install requests numpy scipy pandas nba_api python-dateutil
+
+      - name: Send next pick
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python -m src.send_queue
+
+      - name: Commit sent_at update
+        run: |
+          git config user.name "nba-bot"
+          git config user.email "nba-bot@users.noreply.github.com"
+          git pull --rebase -q || true
+          git add data/history.db pages/history.json || true
+          git diff --cached --quiet || git commit -m "queue: pick sent $(date -u +%H:%M)"
+          git push || true
+
+      - uses: actions/configure-pages@v5
+        if: always()
+      - uses: actions/upload-pages-artifact@v3
+        if: always()
+        with:
+          path: pages
+      - uses: actions/deploy-pages@v4
+        if: always()

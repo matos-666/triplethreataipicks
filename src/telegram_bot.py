@@ -1,25 +1,62 @@
 """Telegram bot: command polling and message sending.
 
-We don't run a long-lived process. Instead, a GitHub Actions cron calls
-`poll()` every ~5 min; it fetches new updates via getUpdates, applies any
-settings commands, and commits the updated settings.json. Picks workflow calls
-`send_picks()`.
+Picks são enviadas uma a uma de 15 em 15 minutos (via send_queue.py).
+Este módulo trata de: formatação, polling de comandos, /start inteligente.
 """
 from __future__ import annotations
 
 import html
 import logging
 import os
+from datetime import datetime, timezone
 from typing import Any
 
 import requests
 
-from src import config
+from src import config, db
 
 log = logging.getLogger(__name__)
 
-API = "https://api.telegram.org/bot{token}/{method}"
+TG_API = "https://api.telegram.org/bot{token}/{method}"
+TG_MAX = 3800
 
+MARKET_LABELS = {
+    "player_points": "Pontos",
+    "player_rebounds": "Ressaltos",
+    "player_assists": "Assistências",
+    "player_threes": "Triplos",
+    "player_blocks": "Bloqueios",
+    "player_steals": "Roubos de bola",
+    "player_turnovers": "Erros",
+    "player_points_rebounds_assists": "Pts+Reb+Ast",
+    "player_points_rebounds": "Pts+Reb",
+    "player_points_assists": "Pts+Ast",
+    "player_rebounds_assists": "Reb+Ast",
+}
+
+SIDE_LABELS = {"Over": "Acima de", "Under": "Abaixo de"}
+
+HELP = """<b>🏀 NBA Props Bot — comandos</b>
+
+/start — registar e ver as picks do dia
+/picks — últimas picks do dia (ou histórico recente)
+/config — configuração actual
+/setev &lt;num&gt; — EV mínimo (ex: /setev 0.05 → 5%)
+/setoddsmin &lt;num&gt; — odd mínima (ex: /setoddsmin 1.5)
+/setoddsmax &lt;num&gt; — odd máxima (ex: /setoddsmax 3.0)
+/setmaxevents &lt;n&gt; — máx jogos/dia (poupa créditos API)
+/setkelly &lt;num&gt; — fracção Kelly (ex: /setkelly 0.25)
+/markets — mercados disponíveis
+/addmarket &lt;key&gt; — adicionar mercado
+/rmmarket &lt;key&gt; — remover mercado
+/stats — win rate e unidades históricas
+/stop — parar de receber picks
+/help — esta mensagem"""
+
+
+# ─────────────────────────────────────────────────────────────
+# Telegram API low-level
+# ─────────────────────────────────────────────────────────────
 
 def _token() -> str:
     t = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -29,21 +66,16 @@ def _token() -> str:
 
 
 def _call(method: str, **params) -> dict:
-    url = API.format(token=_token(), method=method)
+    url = TG_API.format(token=_token(), method=method)
     r = requests.post(url, data=params, timeout=30)
     r.raise_for_status()
     return r.json()
 
 
-def send(chat_id: int, text: str, parse_mode: str = "HTML", disable_preview: bool = True) -> None:
+def send(chat_id: int, text: str, parse_mode: str = "HTML") -> None:
     try:
-        _call(
-            "sendMessage",
-            chat_id=chat_id,
-            text=text,
-            parse_mode=parse_mode,
-            disable_web_page_preview="true" if disable_preview else "false",
-        )
+        _call("sendMessage", chat_id=chat_id, text=text,
+              parse_mode=parse_mode, disable_web_page_preview="true")
     except Exception as e:
         log.error("Telegram send failed to %s: %s", chat_id, e)
 
@@ -54,11 +86,7 @@ def broadcast(text: str) -> None:
         send(int(cid), text)
 
 
-TG_MAX = 3800  # stay under 4096 hard limit with headroom
-
-
 def _chunk_text(text: str) -> list[str]:
-    """Split arbitrary text into Telegram-safe chunks, preferring line breaks."""
     if len(text) <= TG_MAX:
         return [text]
     chunks: list[str] = []
@@ -75,77 +103,140 @@ def _chunk_text(text: str) -> list[str]:
     return chunks
 
 
-def send_picks(picks: list[dict]) -> None:
-    s = config.load()
-    chat_ids = s.get("chat_ids", [])
-    if not chat_ids:
-        log.warning("No chat_ids registered; skipping broadcast")
-        return
-    if not picks:
-        msg = "<b>NBA Props</b>\nSem picks hoje acima do EV mínimo."
-        for cid in chat_ids:
-            send(int(cid), msg)
-        return
-    chunks = _chunk_picks(picks)
-    for cid in chat_ids:
-        for i, chunk in enumerate(chunks):
-            send(int(cid), chunk)
+# ─────────────────────────────────────────────────────────────
+# Pick card formatting  (one beautiful pick per message)
+# ─────────────────────────────────────────────────────────────
 
+def format_pick_card(pick: dict, index: int, total: int) -> str:
+    market_label = MARKET_LABELS.get(pick["market"], pick["market"].replace("player_", "").replace("_", "+"))
+    side_label = SIDE_LABELS.get(pick["side"], pick["side"])
+    ev_pct = pick["ev"] * 100
+    kelly_pct = (pick.get("kelly") or 0) * 100
+    market_pct = pick["market_prob"] * 100
+    model_pct = pick["model_prob"] * 100
+    edge_pct = (pick["model_prob"] - pick["market_prob"]) * 100
+    american = pick.get("american_odds", 0)
+    american_str = f"+{american}" if american and american > 0 else str(american) if american else ""
 
-def _pick_line(p: dict) -> str:
-    market = p["market"].replace("player_", "").replace("_", "+")
-    ev_pct = p["ev"] * 100
-    kelly_pct = (p.get("kelly") or 0) * 100
+    # EV bar (visual indicator)
+    ev_bar = _ev_bar(ev_pct)
+
     return (
-        f"• <b>{html.escape(p['player_name'])}</b> {p['side']} {p['line']} {market}\n"
-        f"  @ {p['decimal_odds']:.2f} ({p['bookmaker']}) — "
-        f"<b>EV {ev_pct:+.1f}%</b> | Kelly {kelly_pct:.1f}%\n"
-        f"  <i>modelo: {p['model_mean']:.1f} ± {p['model_std']:.1f} ({p['n_games']} jogos) | p={p['model_prob']:.2f}</i>"
+        f"─────────────────────\n"
+        f"🏀 <b>Pick {index}/{total}</b> · {pick.get('game_date','')}\n"
+        f"🆚 {html.escape(pick.get('away_team',''))} @ {html.escape(pick.get('home_team',''))}\n"
+        f"─────────────────────\n"
+        f"\n"
+        f"👤 <b>{html.escape(pick['player_name'])}</b>\n"
+        f"📋 <b>{side_label} {pick['line']} {market_label}</b>\n"
+        f"🏦 {pick.get('bookmaker','').upper()} · Odd <b>{pick['decimal_odds']:.2f}</b>"
+        + (f" ({american_str})" if american_str else "") + "\n"
+        f"\n"
+        f"📊 <b>Análise do modelo</b> <i>({pick.get('n_games',0)} jogos)</i>\n"
+        f"   Média: <b>{pick.get('model_mean',0):.1f}</b> · Variação: ±{pick.get('model_std',0):.1f}\n"
+        f"   P(ganhar): <b>{model_pct:.0f}%</b> · Casa implica: {market_pct:.0f}%\n"
+        f"   Edge: <b>{edge_pct:+.1f} pp</b>\n"
+        f"\n"
+        f"💹 <b>Expected Value: {ev_pct:+.1f}%</b>  {ev_bar}\n"
+        f"📐 Kelly sugerido: <b>{kelly_pct:.1f}%</b> do bankroll\n"
+        f"\n"
+        f"<i>⚠️ Não considera lesões, rotações ou matchups de playoff.</i>"
     )
 
 
-def _chunk_picks(picks: list[dict]) -> list[str]:
-    header = f"<b>🏀 NBA Props — {picks[0].get('game_date','hoje')}</b>\n<i>{len(picks)} pick(s) acima do EV mínimo</i>\n\n"
-    footer = "\n<i>Apostas envolvem risco. Aposta com responsabilidade.</i>"
-    chunks: list[str] = []
-    buf = header
-    first = True
+def _ev_bar(ev_pct: float) -> str:
+    filled = min(int(ev_pct / 5), 10)
+    return "🟩" * filled + "⬜" * (10 - filled)
+
+
+def format_daily_summary(picks: list[dict]) -> str:
+    """Short summary sent when picks are queued — before individual sends start."""
+    if not picks:
+        return "🏀 <b>Sem picks hoje</b> acima do EV mínimo.\nTenta baixar o EV mínimo com /setev 0.03"
+    today = picks[0].get("game_date", "hoje")
+    top3 = picks[:3]
+    lines = [
+        f"🏀 <b>Picks do dia — {today}</b>",
+        f"📬 <b>{len(picks)} pick(s)</b> encontradas. Serão enviadas de <b>15 em 15 minutos</b>.\n",
+        f"🔝 <b>Top 3 por EV:</b>",
+    ]
+    for i, p in enumerate(top3, 1):
+        market_label = MARKET_LABELS.get(p["market"], p["market"].replace("player_",""))
+        lines.append(
+            f"  {i}. {html.escape(p['player_name'])} {p['side']} {p['line']} {market_label} "
+            f"· EV <b>{p['ev']*100:+.1f}%</b> @ {p['decimal_odds']:.2f}"
+        )
+    lines.append(f"\n⏳ Primeira pick chega em breve...")
+    return "\n".join(lines)
+
+
+def format_results_card(picks: list[dict], date: str) -> str:
+    """Full results message after grading."""
+    wins = sum(1 for p in picks if p.get("result") == "WIN")
+    losses = sum(1 for p in picks if p.get("result") == "LOSS")
+    pushes = sum(1 for p in picks if p.get("result") == "PUSH")
+    units = sum(
+        (p["decimal_odds"] - 1) if p.get("result") == "WIN"
+        else (-1 if p.get("result") == "LOSS" else 0)
+        for p in picks
+    )
+    total = wins + losses + pushes
+    wr = wins / (wins + losses) * 100 if (wins + losses) else 0
+    profit_emoji = "🟢" if units >= 0 else "🔴"
+
+    lines = [
+        f"📊 <b>Resultados — {date}</b>",
+        f"─────────────────────",
+        f"{profit_emoji} {wins}W · {losses}L · {pushes}P  |  <b>{units:+.2f}u</b>",
+        f"🎯 Win rate: <b>{wr:.0f}%</b>  ({total} picks graduadas)",
+        f"─────────────────────\n",
+    ]
     for p in picks:
-        line = _pick_line(p) + "\n"
-        if len(buf) + len(line) + len(footer) > TG_MAX:
-            chunks.append(buf.rstrip() + (footer if not chunks else ""))
-            buf = f"<b>(cont.)</b>\n"
-        buf += line
-        first = False
-    if buf.strip():
-        chunks.append(buf.rstrip() + (footer if len(chunks) == 0 else ""))
-    return chunks
+        emoji = {"WIN": "✅", "LOSS": "❌", "PUSH": "➖"}.get(p.get("result",""), "⬜")
+        market_label = MARKET_LABELS.get(p["market"], p["market"].replace("player_",""))
+        actual = p.get("actual_value")
+        actual_str = f" → real: <b>{actual}</b>" if actual is not None else ""
+        lines.append(
+            f"{emoji} {html.escape(p['player_name'])} {p['side']} {p['line']} {market_label}"
+            f" @ {p['decimal_odds']:.2f}{actual_str}"
+        )
+    return "\n".join(lines)
 
 
-# ────────────────────────────────────────────────────────────────────
-# Command handling
-# ────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# Send queue (called by send_queue.py every 15 min)
+# ─────────────────────────────────────────────────────────────
 
-HELP = """<b>🏀 NBA Props Bot — comandos</b>
+def send_next_queued() -> bool:
+    """Send one unsent pick. Returns True if something was sent."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    s = config.load()
+    chat_ids = s.get("chat_ids", [])
+    if not chat_ids:
+        log.warning("No chat_ids registered")
+        return False
 
-/start — registar este chat para receber picks
-/config — mostrar configuração actual
-/setev &lt;num&gt; — definir EV mínimo (ex: 0.05 = 5%)
-/setoddsmin &lt;num&gt; — odd decimal mínima (ex: 1.5)
-/setoddsmax &lt;num&gt; — odd decimal máxima (ex: 3.0)
-/setmaxevents &lt;n&gt; — máx jogos a analisar/dia (controla uso API)
-/setkelly &lt;num&gt; — fracção Kelly (ex: 0.25)
-/markets — listar mercados suportados
-/addmarket &lt;key&gt; — adicionar mercado
-/rmmarket &lt;key&gt; — remover mercado
-/stats — estatísticas históricas
-/stop — remover este chat
-/help — mostrar esta mensagem
-"""
+    with db.connect() as conn:
+        unsent = db.unsent_picks_today(conn, today)
+        total_today = len(db.today_picks(conn, today))
+        if not unsent:
+            log.info("No unsent picks for %s", today)
+            return False
+        pick = dict(unsent[0])
+        index = total_today - len(unsent) + 1
+        msg = format_pick_card(pick, index, total_today)
+        for cid in chat_ids:
+            send(int(cid), msg)
+        db.mark_sent(conn, pick["id"])
+        log.info("Sent pick %d/%d: %s %s %s", index, total_today, pick["player_name"], pick["side"], pick["line"])
+    return True
 
+
+# ─────────────────────────────────────────────────────────────
+# Command polling
+# ─────────────────────────────────────────────────────────────
 
 def poll() -> bool:
-    """Fetch and process pending updates. Returns True if settings changed."""
     s = config.load()
     offset = int(s.get("last_update_id", 0)) + 1
     try:
@@ -173,7 +264,7 @@ def poll() -> bool:
             log.exception("command failed: %s", e)
             send(int(chat_id), f"❌ Erro: {html.escape(str(e))}")
     config.save(s)
-    return changed or updates
+    return changed or bool(updates)
 
 
 def _handle(text: str, chat_id: int, s: dict) -> bool:
@@ -181,73 +272,85 @@ def _handle(text: str, chat_id: int, s: dict) -> bool:
     cmd = parts[0].lower().split("@")[0]
     arg = parts[1] if len(parts) > 1 else None
 
-    def ok(msg: str):
-        send(chat_id, msg)
-
     if cmd == "/start":
         if chat_id not in s["chat_ids"]:
             s["chat_ids"].append(chat_id)
-        ok(f"✅ Registado (chat_id={chat_id}). Vais receber picks diárias.\n\n{HELP}")
+        send(chat_id, f"✅ <b>Bem-vindo ao NBA Props Bot!</b>\n"
+                      f"Vais receber picks diárias de <b>15 em 15 minutos</b> a partir das 14h Lisboa.\n\n"
+                      + HELP)
+        _send_today_or_history(chat_id)
         return True
-    if cmd == "/help":
-        ok(HELP)
+
+    if cmd in ("/picks", "/hoje"):
+        _send_today_or_history(chat_id)
         return False
+
+    if cmd == "/help":
+        send(chat_id, HELP)
+        return False
+
     if cmd == "/stop":
         if chat_id in s["chat_ids"]:
             s["chat_ids"].remove(chat_id)
-            ok("Removido. Não irás receber mais picks. /start para voltar.")
+            send(chat_id, "🔕 Removido. Usa /start para voltar a receber picks.")
             return True
-        ok("Não estavas registado.")
+        send(chat_id, "Não estavas registado.")
         return False
+
     if cmd == "/config":
-        ok(_fmt_config(s))
+        send(chat_id, _fmt_config(s))
         return False
+
     if cmd == "/markets":
-        ok("<b>Mercados suportados:</b>\n" + "\n".join(f"• <code>{m}</code>" for m in config.SUPPORTED_MARKETS))
+        send(chat_id,
+             "<b>Mercados disponíveis:</b>\n" +
+             "\n".join(f"• <code>{k}</code> — {v}" for k, v in MARKET_LABELS.items()))
         return False
+
     if cmd == "/setev" and arg:
         s["min_ev"] = float(arg)
-        ok(f"✅ EV mínimo: {s['min_ev']}")
+        send(chat_id, f"✅ EV mínimo: <b>{float(arg)*100:.1f}%</b>")
         return True
     if cmd == "/setoddsmin" and arg:
         s["min_odds"] = float(arg)
-        ok(f"✅ Odd mínima: {s['min_odds']}")
+        send(chat_id, f"✅ Odd mínima: <b>{arg}</b>")
         return True
     if cmd == "/setoddsmax" and arg:
         s["max_odds"] = float(arg)
-        ok(f"✅ Odd máxima: {s['max_odds']}")
+        send(chat_id, f"✅ Odd máxima: <b>{arg}</b>")
         return True
     if cmd == "/setmaxevents" and arg:
         s["max_events_per_day"] = int(arg)
-        ok(f"✅ Máx jogos/dia: {s['max_events_per_day']}")
+        send(chat_id, f"✅ Máx jogos/dia: <b>{arg}</b>")
         return True
     if cmd == "/setkelly" and arg:
         s["kelly_fraction"] = float(arg)
-        ok(f"✅ Kelly fraction: {s['kelly_fraction']}")
+        send(chat_id, f"✅ Kelly fraction: <b>{arg}</b>")
         return True
     if cmd == "/addmarket" and arg:
         if arg not in config.SUPPORTED_MARKETS:
-            ok(f"❌ Mercado desconhecido. /markets para ver a lista.")
+            send(chat_id, "❌ Mercado desconhecido. /markets para ver a lista.")
             return False
         if arg not in s["markets"]:
             s["markets"].append(arg)
-            ok(f"✅ Adicionado: {arg}")
+            label = MARKET_LABELS.get(arg, arg)
+            send(chat_id, f"✅ Adicionado: <b>{label}</b> (<code>{arg}</code>)")
             return True
-        ok("Já estava na lista.")
+        send(chat_id, "Já estava na lista.")
         return False
     if cmd == "/rmmarket" and arg:
         if arg in s["markets"]:
             s["markets"].remove(arg)
-            ok(f"✅ Removido: {arg}")
+            send(chat_id, f"✅ Removido: <code>{arg}</code>")
             return True
-        ok("Não está na lista.")
+        send(chat_id, "Não está na lista.")
         return False
+
     if cmd == "/stats":
-        from src import db
         with db.connect() as conn:
             summ = db.summary(conn)
         if not summ or not summ.get("total"):
-            ok("Sem picks graduadas ainda.")
+            send(chat_id, "📭 Sem picks graduadas ainda. Os resultados chegam às 12h Lisboa do dia seguinte.")
             return False
         wins = summ.get("wins") or 0
         losses = summ.get("losses") or 0
@@ -255,28 +358,69 @@ def _handle(text: str, chat_id: int, s: dict) -> bool:
         total = summ.get("total") or 0
         units = summ.get("units") or 0
         wr = wins / (wins + losses) * 100 if (wins + losses) else 0
-        ok(
-            f"<b>📊 Histórico</b>\n"
-            f"Picks graduadas: {total}\n"
-            f"Wins: {wins} | Losses: {losses} | Pushes: {pushes}\n"
-            f"Win rate: {wr:.1f}%\n"
-            f"Unidades: {units:+.2f}"
-        )
+        profit_emoji = "🟢" if units >= 0 else "🔴"
+        send(chat_id,
+             f"📊 <b>Histórico total</b>\n"
+             f"─────────────────────\n"
+             f"{profit_emoji} {wins}W · {losses}L · {pushes}P\n"
+             f"🎯 Win rate: <b>{wr:.1f}%</b>\n"
+             f"💰 Unidades: <b>{units:+.2f}u</b>\n"
+             f"📝 Total picks: {total}\n"
+             f"─────────────────────\n"
+             f"<i>Vê o histórico completo em:\nhttps://matos-666.github.io/triplethreataipicks/</i>")
         return False
 
-    ok("Comando desconhecido. /help")
+    send(chat_id, "Comando desconhecido. /help para ver todos os comandos.")
     return False
+
+
+def _send_today_or_history(chat_id: int) -> None:
+    """Send today's picks summary or last graded results if no picks today."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    with db.connect() as conn:
+        today_p = db.today_picks(conn, today)
+        if today_p:
+            sent = sum(1 for p in today_p if p.get("sent_at"))
+            unsent = len(today_p) - sent
+            lines = [
+                f"🏀 <b>Picks de hoje — {today}</b>",
+                f"📬 {len(today_p)} picks  |  ✅ Enviadas: {sent}  |  ⏳ Em fila: {unsent}\n",
+                f"<b>Todas as picks de hoje:</b>",
+            ]
+            for i, p in enumerate(today_p, 1):
+                market_label = MARKET_LABELS.get(p["market"], p["market"].replace("player_",""))
+                status = "✅" if p.get("sent_at") else "⏳"
+                lines.append(
+                    f"{status} {i}. <b>{html.escape(p['player_name'])}</b> {p['side']} {p['line']} "
+                    f"{market_label} · EV <b>{p['ev']*100:+.1f}%</b> @ {p['decimal_odds']:.2f} ({p.get('bookmaker','')})"
+                )
+            send(chat_id, "\n".join(lines))
+        else:
+            last_date = db.last_graded_date(conn)
+            if last_date:
+                graded = [p for p in db.all_picks(conn, 200) if p.get("game_date") == last_date and p.get("result")]
+                if graded:
+                    msg = format_results_card(graded, last_date)
+                    for chunk in _chunk_text(msg):
+                        send(chat_id, chunk)
+                    return
+            send(chat_id,
+                 "📭 <b>Sem picks hoje ainda.</b>\n"
+                 "As picks chegam às 14h Lisboa. Usa /help para ver todos os comandos.")
 
 
 def _fmt_config(s: dict) -> str:
     return (
-        "<b>⚙️ Configuração</b>\n"
-        f"EV mínimo: <code>{s['min_ev']}</code>\n"
-        f"Odds: <code>{s['min_odds']}–{s['max_odds']}</code>\n"
-        f"Max jogos/dia: <code>{s['max_events_per_day']}</code>\n"
-        f"Kelly fraction: <code>{s['kelly_fraction']}</code>\n"
-        f"Mercados:\n" + "\n".join(f"  • <code>{m}</code>" for m in s["markets"]) + "\n"
-        f"Chats registados: {len(s['chat_ids'])}"
+        "⚙️ <b>Configuração actual</b>\n"
+        f"─────────────────────\n"
+        f"📈 EV mínimo: <b>{s['min_ev']*100:.1f}%</b>\n"
+        f"🎰 Odds: <b>{s['min_odds']} — {s['max_odds']}</b>\n"
+        f"🏟️ Máx jogos/dia: <b>{s['max_events_per_day']}</b>\n"
+        f"📐 Kelly fraction: <b>{s['kelly_fraction']}</b>\n"
+        f"📋 Mercados:\n" +
+        "\n".join(f"   • {MARKET_LABELS.get(m, m)}" for m in s["markets"]) + "\n"
+        f"─────────────────────\n"
+        f"👥 Chats registados: {len(s['chat_ids'])}"
     )
 
 
@@ -287,6 +431,9 @@ if __name__ == "__main__":
     if cmd == "poll":
         changed = poll()
         print("changed" if changed else "no-changes")
+    elif cmd == "send_next":
+        sent = send_next_queued()
+        print("sent" if sent else "nothing-to-send")
     else:
-        print(f"unknown command: {cmd}")
+        print(f"unknown: {cmd}")
         sys.exit(1)

@@ -33,11 +33,15 @@ CREATE TABLE IF NOT EXISTS picks (
     result TEXT,
     actual_value REAL,
     graded_at TEXT,
+    sent_at TEXT,
     UNIQUE(game_date, player_name, market, line, side, bookmaker)
 );
 CREATE INDEX IF NOT EXISTS idx_picks_date ON picks(game_date);
 CREATE INDEX IF NOT EXISTS idx_picks_result ON picks(result);
+CREATE INDEX IF NOT EXISTS idx_picks_sent ON picks(sent_at);
 """
+
+_MIGRATION = "ALTER TABLE picks ADD COLUMN sent_at TEXT"
 
 
 def connect() -> sqlite3.Connection:
@@ -45,6 +49,11 @@ def connect() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    # Migrate old DBs that don't have sent_at yet.
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(picks)").fetchall()}
+    if "sent_at" not in cols:
+        conn.execute(_MIGRATION)
+        conn.commit()
     return conn
 
 
@@ -65,6 +74,31 @@ def insert_pick(conn: sqlite3.Connection, pick: dict[str, Any]) -> int | None:
     return cur.lastrowid if cur.rowcount else None
 
 
+def unsent_picks_today(conn: sqlite3.Connection, game_date: str) -> list[sqlite3.Row]:
+    """Picks from today that haven't been sent to Telegram yet, ordered by EV desc."""
+    rows = conn.execute(
+        "SELECT * FROM picks WHERE game_date = ? AND sent_at IS NULL ORDER BY ev DESC",
+        (game_date,),
+    ).fetchall()
+    return list(rows)
+
+
+def mark_sent(conn: sqlite3.Connection, pick_id: int) -> None:
+    conn.execute(
+        "UPDATE picks SET sent_at=? WHERE id=?",
+        (datetime.utcnow().isoformat(timespec="seconds") + "Z", pick_id),
+    )
+    conn.commit()
+
+
+def today_picks(conn: sqlite3.Connection, game_date: str) -> list[dict]:
+    rows = conn.execute(
+        "SELECT * FROM picks WHERE game_date = ? ORDER BY ev DESC",
+        (game_date,),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
 def ungraded_picks(conn: sqlite3.Connection, game_date: str) -> list[sqlite3.Row]:
     rows = conn.execute(
         "SELECT * FROM picks WHERE game_date = ? AND result IS NULL",
@@ -83,10 +117,17 @@ def grade_pick(conn: sqlite3.Connection, pick_id: int, result: str, actual: floa
 
 def all_picks(conn: sqlite3.Connection, limit: int = 500) -> list[dict]:
     rows = conn.execute(
-        "SELECT * FROM picks ORDER BY game_date DESC, id DESC LIMIT ?",
+        "SELECT * FROM picks ORDER BY game_date DESC, ev DESC LIMIT ?",
         (limit,),
     ).fetchall()
     return [dict(r) for r in rows]
+
+
+def last_graded_date(conn: sqlite3.Connection) -> str | None:
+    row = conn.execute(
+        "SELECT game_date FROM picks WHERE result IS NOT NULL ORDER BY game_date DESC LIMIT 1"
+    ).fetchone()
+    return row[0] if row else None
 
 
 def summary(conn: sqlite3.Connection) -> dict:
