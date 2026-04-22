@@ -7,7 +7,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = ROOT / "data" / "history.db"
 
-SCHEMA = """
+_TABLE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS picks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL,
@@ -36,6 +36,9 @@ CREATE TABLE IF NOT EXISTS picks (
     sent_at TEXT,
     UNIQUE(game_date, player_name, market, line, side, bookmaker)
 );
+"""
+
+_INDEX_SCHEMA = """
 CREATE INDEX IF NOT EXISTS idx_picks_date ON picks(game_date);
 CREATE INDEX IF NOT EXISTS idx_picks_result ON picks(result);
 CREATE INDEX IF NOT EXISTS idx_picks_sent ON picks(sent_at);
@@ -48,12 +51,15 @@ def connect() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    conn.executescript(SCHEMA)
-    # Migrate old DBs that don't have sent_at yet.
+    # Run table creation first (without indexes that depend on new columns).
+    conn.executescript(_TABLE_SCHEMA)
+    # Migrate old DBs — must happen before index creation.
     cols = {r[1] for r in conn.execute("PRAGMA table_info(picks)").fetchall()}
     if "sent_at" not in cols:
         conn.execute(_MIGRATION)
         conn.commit()
+    # Now safe to create indexes (sent_at already exists).
+    conn.executescript(_INDEX_SCHEMA)
     return conn
 
 
