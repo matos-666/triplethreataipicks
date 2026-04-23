@@ -1,9 +1,5 @@
 {
-  "bookmakers": [
-    "fanduel",
-    "draftkings",
-    "betmgm"
-  ],
+  "bookmakers": [],
   "chat_ids": [
     958258732,
     8720731686
