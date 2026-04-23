@@ -31,10 +31,13 @@ def run() -> int:
 
     log.info("Fetching events...")
     events = odds.fetch_events(api_key)
-    today_utc = datetime.now(timezone.utc).date().isoformat()
-    todays = [e for e in events if e["commence_time"][:10] == today_utc]
+    # NBA playoff games tip off in the evening US time = early hours UTC next day.
+    # Include anything commencing within the next 36h (covers today + tonight).
+    from datetime import timedelta
+    now_utc = datetime.now(timezone.utc)
+    cutoff = now_utc + timedelta(hours=36)
+    todays = [e for e in events if e["commence_time"] <= cutoff.isoformat()[:19]]
     if not todays:
-        # Some games cross midnight UTC — also include next-day within 24h
         todays = events
     todays = todays[: int(s["max_events_per_day"])]
     log.info("Processing %d event(s)", len(todays))
