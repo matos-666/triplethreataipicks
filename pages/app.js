@@ -82,7 +82,6 @@ function render() {
       <td>${(p.decimal_odds || 0).toFixed(2)}</td>
       <td class="${p.ev >= 0 ? 'ev-pos' : 'ev-neg'}">${((p.ev||0)*100).toFixed(1)}%</td>
       <td class="hide-mobile muted">${(p.model_mean||0).toFixed(1)} ± ${(p.model_std||0).toFixed(1)}</td>
-      <td class="hide-mobile muted">${p.bookmaker||''}</td>
       <td class="${p.result ? 'r-'+p.result : 'r-pending'}">${
         p.result ? p.result + (p.actual_value != null ? ` (${p.actual_value})` : '') : '—'
       }</td>
