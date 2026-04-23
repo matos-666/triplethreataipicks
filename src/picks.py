@@ -58,7 +58,18 @@ def run() -> int:
             time.sleep(1)  # gentle rate limit
         picks.sort(key=lambda p: p["ev"], reverse=True)
 
-        # Keep only top 3 per market (user wants the best, not all ~60)
+        # Dedup: one pick per (player, market) — keep highest EV (= best odd / edge).
+        # This removes same player appearing with different bookmakers or lines.
+        seen: dict[tuple, bool] = {}
+        deduped: list[dict] = []
+        for p in picks:
+            key = (p["player_name"], p["market"])
+            if key not in seen:
+                seen[key] = True
+                deduped.append(p)
+        picks = deduped
+
+        # Keep only top 3 per market
         per_market: dict[str, int] = {}
         filtered: list[dict] = []
         for p in picks:
