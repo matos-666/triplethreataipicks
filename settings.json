@@ -18,8 +18,8 @@
     "player_threes"
   ],
   "max_events_per_day": 5,
-  "max_odds": 3.0,
-  "min_ev": 0.05,
+  "max_odds": 3,
+  "min_ev": 0.1,
   "min_games_history": 5,
   "min_odds": 1.5,
   "regions": "us"
