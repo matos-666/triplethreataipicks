@@ -56,7 +56,21 @@ def run() -> int:
             event = odds.parse_event(raw_odds)
             picks.extend(_process_event(event, s, conn))
             time.sleep(1)  # gentle rate limit
-    picks.sort(key=lambda p: p["ev"], reverse=True)
+        picks.sort(key=lambda p: p["ev"], reverse=True)
+
+        # Keep only top 3 per market (user wants the best, not all ~60)
+        per_market: dict[str, int] = {}
+        filtered: list[dict] = []
+        for p in picks:
+            c = per_market.get(p["market"], 0)
+            if c < 3:
+                filtered.append(p)
+                per_market[p["market"]] = c + 1
+        picks = filtered
+
+        # Only insert the curated top picks into DB (send_queue reads from DB).
+        for p in picks:
+            db.insert_pick(conn, p)
 
     _write_history()
     log.info("Found %d qualifying picks", len(picks))
@@ -118,7 +132,6 @@ def _process_event(event: odds.OddsEvent, settings: dict, conn) -> list[dict]:
                     "model_std": round(mo.std, 2),
                     "n_games": mo.n,
                 }
-                db.insert_pick(conn, pick)
                 results.append(pick)
     return results
 

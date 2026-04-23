@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 
 TG_API = "https://api.telegram.org/bot{token}/{method}"
 TG_MAX = 3800
+AFFILIATE_URL = "https://track.affshares.com/visit/?bta=657658&nci=5687"
 
 MARKET_LABELS = {
     "player_points": "Pontos",
@@ -129,7 +130,7 @@ def format_pick_card(pick: dict, index: int, total: int) -> str:
         f"\n"
         f"👤 <b>{html.escape(pick['player_name'])}</b>\n"
         f"📋 <b>{side_label} {pick['line']} {market_label}</b>\n"
-        f"🏦 {pick.get('bookmaker','').upper()} · Odd <b>{pick['decimal_odds']:.2f}</b>"
+        f"🏦 <a href=\"{AFFILIATE_URL}\">{html.escape(pick.get('bookmaker','').upper())} · Odd {pick['decimal_odds']:.2f}</a>"
         + (f" ({american_str})" if american_str else "") + "\n"
         f"\n"
         f"📊 <b>Análise do modelo</b> <i>({pick.get('n_games',0)} jogos)</i>\n"
@@ -139,6 +140,8 @@ def format_pick_card(pick: dict, index: int, total: int) -> str:
         f"\n"
         f"💹 <b>Expected Value: {ev_pct:+.1f}%</b>  {ev_bar}\n"
         f"📐 Kelly sugerido: <b>{kelly_pct:.1f}%</b> do bankroll\n"
+        f"\n"
+        f"🎯 <a href=\"{AFFILIATE_URL}\"><b>Apostar agora →</b></a>\n"
         f"\n"
         f"<i>⚠️ Não considera lesões, rotações ou matchups de playoff.</i>"
     )
@@ -157,7 +160,7 @@ def format_daily_summary(picks: list[dict]) -> str:
     top3 = picks[:3]
     lines = [
         f"🏀 <b>Picks do dia — {today}</b>",
-        f"📬 <b>{len(picks)} pick(s)</b> encontradas. Serão enviadas de <b>15 em 15 minutos</b>.\n",
+        f"📬 <b>{len(picks)} pick(s)</b> top-EV por mercado. Enviadas em lotes a cada poucos minutos.\n",
         f"🔝 <b>Top 3 por EV:</b>",
     ]
     for i, p in enumerate(top3, 1):
@@ -207,8 +210,8 @@ def format_results_card(picks: list[dict], date: str) -> str:
 # Send queue (called by send_queue.py every 15 min)
 # ─────────────────────────────────────────────────────────────
 
-def send_next_queued() -> bool:
-    """Send one unsent pick. Returns True if something was sent."""
+def send_next_queued(batch: int = 3) -> bool:
+    """Send up to `batch` unsent picks per invocation (compensates GH Actions cron throttling)."""
     today = datetime.now(timezone.utc).date().isoformat()
     s = config.load()
     chat_ids = s.get("chat_ids", [])
@@ -216,20 +219,25 @@ def send_next_queued() -> bool:
         log.warning("No chat_ids registered")
         return False
 
+    sent_any = False
     with db.connect() as conn:
         unsent = db.unsent_picks_today(conn, today)
         total_today = len(db.today_picks(conn, today))
         if not unsent:
             log.info("No unsent picks for %s", today)
             return False
-        pick = dict(unsent[0])
-        index = total_today - len(unsent) + 1
-        msg = format_pick_card(pick, index, total_today)
-        for cid in chat_ids:
-            send(int(cid), msg)
-        db.mark_sent(conn, pick["id"])
-        log.info("Sent pick %d/%d: %s %s %s", index, total_today, pick["player_name"], pick["side"], pick["line"])
-    return True
+        to_send = unsent[:batch]
+        for offset, row in enumerate(to_send):
+            pick = dict(row)
+            index = total_today - len(unsent) + 1 + offset
+            msg = format_pick_card(pick, index, total_today)
+            for cid in chat_ids:
+                send(int(cid), msg)
+            db.mark_sent(conn, pick["id"])
+            log.info("Sent pick %d/%d: %s %s %s", index, total_today,
+                     pick["player_name"], pick["side"], pick["line"])
+            sent_any = True
+    return sent_any
 
 
 # ─────────────────────────────────────────────────────────────

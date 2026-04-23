@@ -1,9 +1,8 @@
 name: Poll Telegram Commands
 
 on:
-  schedule:
-    # Every 5 minutes. GitHub enforces a 5-min minimum.
-    - cron: "*/5 * * * *"
+  # Polling desativado: comandos Telegram tratados pelo Cloudflare Worker (instantâneo).
+  # Mantém workflow_dispatch para testes manuais.
   workflow_dispatch:
 
 permissions:
