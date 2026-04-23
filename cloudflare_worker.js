@@ -89,6 +89,8 @@ async function handleCommand(cmd, arg, chatId, env) {
         `🏀 Recebes picks diárias de NBA Props com base num modelo estatístico.\n` +
         `📬 As picks chegam às <b>14h Lisboa</b>, espaçadas ao longo do dia.\n` +
         `📊 Resultados graduados às <b>12h do dia seguinte</b>.\n\n` + HELP, env);
+      // Pequena pausa antes de mostrar picks/resultados
+      await sleep(1500);
       await sendTodayOrHistory(chatId, env);
       break;
     }
@@ -223,7 +225,7 @@ async function sendStats(chatId, env) {
     `💰 Unidades: <b>${units >= 0 ? "+" : ""}${units.toFixed(2)}u</b>\n` +
     `📝 Total picks: ${s.total}\n` +
     `─────────────────────\n` +
-    `<i>Histórico completo:\nhttps://matos-666.github.io/triplethreataipicks/</i>`, env);
+    `<a href="https://matos-666.github.io/triplethreataipicks/">📊 Ver histórico completo de picks →</a>`, env);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -237,20 +239,33 @@ function fmtResults(picks, date) {
   const units  = picks.reduce((sum, p) =>
     sum + (p.result === "WIN" ? p.decimal_odds - 1 : p.result === "LOSS" ? -1 : 0), 0);
   const wr     = (wins + losses) ? (wins / (wins + losses) * 100) : 0;
-  const emoji  = units >= 0 ? "🟢" : "🔴";
+  const profit = units >= 0 ? "🟢" : "🔴";
+  const trend  = wr >= 55 ? "🔥" : wr >= 50 ? "📈" : "📉";
 
-  let msg = `📊 <b>Últimos resultados — ${date}</b>\n`;
-  msg    += `─────────────────────\n`;
-  msg    += `${emoji} ${wins}W · ${losses}L · ${pushes}P  |  <b>${units >= 0 ? "+" : ""}${units.toFixed(2)}u</b>\n`;
-  msg    += `🎯 Win rate: <b>${wr.toFixed(0)}%</b>  (${wins + losses + pushes} picks)\n`;
-  msg    += `─────────────────────\n\n`;
+  let msg = `${trend} <b>Resultados — ${date}</b>\n`;
+  msg    += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg    += `${profit} <b>${wins}W · ${losses}L${pushes ? ` · ${pushes}P` : ""}</b>`;
+  msg    += `  |  <b>${units >= 0 ? "+" : ""}${units.toFixed(2)}u</b>\n`;
+  msg    += `🎯 Win rate: <b>${wr.toFixed(0)}%</b>   📋 ${wins + losses + pushes} picks\n`;
+  msg    += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-  for (const p of picks) {
-    const e  = { WIN: "✅", LOSS: "❌", PUSH: "➖" }[p.result] || "⬜";
-    const ml = MARKET_LABELS[p.market] || p.market.replace("player_", "");
-    const av = p.actual_value != null ? ` → real: <b>${p.actual_value}</b>` : "";
-    msg += `${e} ${esc(p.player_name)} ${p.side} ${p.line} ${ml} @ ${p.decimal_odds.toFixed(2)}${av}\n`;
+  // Top 3 wins por odds mais altas
+  const topWins = picks
+    .filter(p => p.result === "WIN")
+    .sort((a, b) => b.decimal_odds - a.decimal_odds)
+    .slice(0, 3);
+
+  if (topWins.length) {
+    msg += `🏆 <b>Destaques do dia:</b>\n`;
+    for (const p of topWins) {
+      const ml = MARKET_LABELS[p.market] || p.market.replace("player_", "");
+      const av = p.actual_value != null ? ` · resultado: <b>${p.actual_value}</b>` : "";
+      msg += `   ✅ ${esc(p.player_name)} ${p.side} ${p.line} ${ml} @ <b>${p.decimal_odds.toFixed(2)}</b>${av}\n`;
+    }
+    msg += "\n";
   }
+
+  msg += `<a href="https://matos-666.github.io/triplethreataipicks/">📊 Ver histórico completo de picks →</a>`;
   return msg;
 }
 
@@ -359,6 +374,10 @@ async function tgSend(chatId, text, env) {
 // ─────────────────────────────────────────────────────────────
 // Utils
 // ─────────────────────────────────────────────────────────────
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function esc(s) {
   return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
