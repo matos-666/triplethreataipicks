@@ -91,8 +91,10 @@ async function handleCommand(cmd, arg, chatId, env) {
         `📬 As picks chegam às <b>14h Lisboa</b>, espaçadas ao longo do dia.\n` +
         `📊 Resultados graduados às <b>12h do dia seguinte</b>.`, env);
 
+      // Pausa de 20s para leitura
+      await sleep(20000);
+
       // Mensagem dedicada sobre bankroll (CRÍTICA para stake sizing)
-      await sleep(500);
       await tgSend(chatId,
         `💼 <b>IMPORTANTE: Define a tua bankroll!</b>\n\n` +
         `Cada pick inclui a <b>stake recomendada</b> baseada em Kelly Criterion.\n` +
@@ -101,11 +103,12 @@ async function handleCommand(cmd, arg, chatId, env) {
         `<code>/setbankroll 500</code>\n\n` +
         `<i>Substitui 500 pelo teu bankroll em euros.</i>`, env);
 
-      await sleep(500);
+      // Pausa de 25s para leitura
+      await sleep(25000);
       await tgSend(chatId, HELP, env);
 
-      // Pequena pausa antes de mostrar picks/resultados
-      await sleep(1000);
+      // Pausa de 20s antes de mostrar picks/resultados
+      await sleep(20000);
       await sendTodayOrHistory(chatId, env);
       break;
     }
@@ -215,8 +218,7 @@ async function sendTodayOrHistory(chatId, env) {
       msg += ` · EV <b>${(p.ev * 100).toFixed(1)}%</b> @ ${p.decimal_odds.toFixed(2)}\n`;
     }
 
-    msg += `\n⏳ As picks chegam espaçadas ao longo do dia.\n`;
-    msg += `<a href="https://matos-666.github.io/triplethreataipicks/">📊 Ver todas as picks →</a>`;
+    msg += `\n⏳ As picks chegam espaçadas ao longo do dia.`;
 
     for (const chunk of splitMsg(msg)) await tgSend(chatId, chunk, env);
   } else {
