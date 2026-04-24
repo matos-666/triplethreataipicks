@@ -42,6 +42,90 @@ const HELP = `<b>🏀 TripleThreat AI Picks — comandos</b>
 /help — esta mensagem`;
 
 // ─────────────────────────────────────────────────────────────
+// Analytics & Logging
+// ─────────────────────────────────────────────────────────────
+
+async function logEvent(eventType, data, env) {
+  const kv = env.ANALYTICS;
+  if (!kv) return;
+  const timestamp = new Date().toISOString();
+  const key = `event:${timestamp}:${Math.random()}`;
+  const event = { type: eventType, data, timestamp };
+  try {
+    await kv.put(key, JSON.stringify(event), { expirationTtl: 2592000 }); // 30 days
+  } catch (e) {
+    console.error("Analytics log error:", e);
+  }
+}
+
+async function getDashboardStats(env) {
+  const kv = env.ANALYTICS;
+  if (!kv) return {};
+  const settings = await getSettings(env);
+  const history = await fetchHistory();
+
+  const now = Date.now();
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Count events by type
+  const list = await kv.list({ prefix: "event:" });
+  const events = [];
+  for (const { name } of list.keys || []) {
+    try {
+      const data = await kv.get(name);
+      if (data) events.push(JSON.parse(data));
+    } catch (e) {}
+  }
+
+  // Stats
+  const totalUsers = (settings.chat_ids || []).length;
+  const totalUserJoins = events.filter(e => e.type === "user_join").length;
+  const totalUserLeaves = events.filter(e => e.type === "user_leave").length;
+  const totalPicksSent = events.filter(e => e.type === "pick_sent").length;
+  const commandCounts = {};
+  events.filter(e => e.type === "command").forEach(e => {
+    const cmd = e.data?.command || "unknown";
+    commandCounts[cmd] = (commandCounts[cmd] || 0) + 1;
+  });
+
+  // Daily stats (last 30 days)
+  const dailyStats = {};
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now - i * 86400000).toISOString().slice(0, 10);
+    const dayEvents = events.filter(e => e.timestamp.slice(0, 10) === date);
+    dailyStats[date] = {
+      joins: dayEvents.filter(e => e.type === "user_join").length,
+      leaves: dayEvents.filter(e => e.type === "user_leave").length,
+      picks: dayEvents.filter(e => e.type === "pick_sent").length,
+      commands: dayEvents.filter(e => e.type === "command").length,
+    };
+  }
+
+  // Picks performance
+  const picks = (history?.picks || []).filter(p => p.result);
+  const wins = picks.filter(p => p.result === "WIN").length;
+  const losses = picks.filter(p => p.result === "LOSS").length;
+  const pushes = picks.filter(p => p.result === "PUSH").length;
+  const units = picks.reduce((sum, p) => {
+    if (p.result === "WIN") return sum + (p.decimal_odds - 1);
+    if (p.result === "LOSS") return sum - 1;
+    return sum;
+  }, 0);
+  const wr = (wins + losses) ? (wins / (wins + losses) * 100) : 0;
+
+  return {
+    totalUsers,
+    totalUserJoins,
+    totalUserLeaves,
+    totalPicksSent,
+    commandCounts,
+    dailyStats,
+    picks: { total: picks.length, wins, losses, pushes, wr, units },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
 // /start Message Queue (KV-based, 15s between messages)
 // ─────────────────────────────────────────────────────────────
 
@@ -127,11 +211,194 @@ async function processStartQueue(env) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Dashboard endpoints
+// ─────────────────────────────────────────────────────────────
+
+async function serveDashboard(env) {
+  const html = `<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TripleThreat AI Picks — Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7fa; color: #2c3e50; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { font-size: 28px; margin-bottom: 5px; }
+    .subtitle { opacity: 0.9; font-size: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #667eea; }
+    .card h3 { font-size: 12px; text-transform: uppercase; color: #7f8c8d; margin-bottom: 10px; font-weight: 600; }
+    .card .value { font-size: 32px; font-weight: bold; color: #2c3e50; }
+    .card .delta { font-size: 12px; color: #27ae60; margin-top: 5px; }
+    .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .chart-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .chart-container h2 { font-size: 16px; margin-bottom: 15px; color: #2c3e50; }
+    .table { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .table h2 { font-size: 16px; margin-bottom: 15px; color: #2c3e50; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #7f8c8d; border-bottom: 1px solid #ecf0f1; }
+    td { padding: 12px; border-bottom: 1px solid #ecf0f1; }
+    .loading { text-align: center; padding: 40px; color: #7f8c8d; }
+    .error { background: #fee; color: #c00; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    .refresh { font-size: 12px; color: #7f8c8d; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏀 TripleThreat AI Picks Dashboard</h1>
+      <p class="subtitle">Analytics & User Growth</p>
+    </header>
+
+    <div id="error" class="error" style="display:none;"></div>
+    <div id="loading" class="loading">Carregando dados...</div>
+    <div id="content" style="display:none;">
+      <div class="grid" id="stats"></div>
+      <div class="charts" id="charts"></div>
+      <div class="table">
+        <h2>Comandos Mais Usados</h2>
+        <table>
+          <thead>
+            <tr><th>Comando</th><th>Usos</th></tr>
+          </thead>
+          <tbody id="commandsTable"></tbody>
+        </table>
+        <div class="refresh">Auto-refresh a cada hora</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TOKEN = new URLSearchParams(window.location.search).get('token') || '';
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch(\`/api/dashboard/stats?token=\${TOKEN}\`);
+        if (!res.ok) throw new Error('Unauthorized');
+        const data = await res.json();
+
+        renderStats(data);
+        renderCharts(data);
+        renderCommands(data);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = '❌ Erro: Token inválido ou dados não disponíveis';
+      }
+    }
+
+    function renderStats(data) {
+      const html = \`
+        <div class="card">
+          <h3>Total Users</h3>
+          <div class="value">\${data.totalUsers}</div>
+          <div class="delta">+\${data.totalUserJoins} joins, -\${data.totalUserLeaves} leaves</div>
+        </div>
+        <div class="card">
+          <h3>Picks Enviadas</h3>
+          <div class="value">\${data.totalPicksSent}</div>
+        </div>
+        <div class="card">
+          <h3>Win Rate</h3>
+          <div class="value">\${data.picks.wr.toFixed(1)}%</div>
+          <div class="delta">\${data.picks.wins}W \${data.picks.losses}L \${data.picks.pushes}P</div>
+        </div>
+        <div class="card">
+          <h3>Units</h3>
+          <div class="value" style="color: \${data.picks.units >= 0 ? '#27ae60' : '#e74c3c'};">\${data.picks.units > 0 ? '+' : ''}\${data.picks.units.toFixed(2)}</div>
+          <div class="delta">De \${data.picks.total} picks</div>
+        </div>
+      \`;
+      document.getElementById('stats').innerHTML = html;
+    }
+
+    function renderCharts(data) {
+      const dates = Object.keys(data.dailyStats).sort();
+      const joins = dates.map(d => data.dailyStats[d].joins);
+      const picks = dates.map(d => data.dailyStats[d].picks);
+
+      const chartsHtml = \`
+        <div class="chart-container">
+          <h2>User Joins (últimos 30 dias)</h2>
+          <canvas id="joinsChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <h2>Picks Enviadas (últimos 30 dias)</h2>
+          <canvas id="picksChart"></canvas>
+        </div>
+      \`;
+      document.getElementById('charts').innerHTML = chartsHtml;
+
+      setTimeout(() => {
+        new Chart(document.getElementById('joinsChart'), {
+          type: 'line',
+          data: { labels: dates, datasets: [{ label: 'Joins', data: joins, borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.1)', tension: 0.4 }] },
+          options: { responsive: true, maintainAspectRatio: true }
+        });
+
+        new Chart(document.getElementById('picksChart'), {
+          type: 'bar',
+          data: { labels: dates, datasets: [{ label: 'Picks', data: picks, backgroundColor: '#764ba2' }] },
+          options: { responsive: true, maintainAspectRatio: true }
+        });
+      }, 100);
+    }
+
+    function renderCommands(data) {
+      const cmds = Object.entries(data.commandCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+      const html = cmds.map(([cmd, count]) => \`<tr><td>/\${cmd}</td><td>\${count}</td></tr>\`).join('');
+      document.getElementById('commandsTable').innerHTML = html || '<tr><td colspan="2">Sem dados</td></tr>';
+    }
+
+    loadDashboard();
+    setInterval(loadDashboard, 3600000); // refresh a cada hora
+  </script>
+</body>
+</html>`;
+
+  return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
+
+async function serveDashboardStats(request, env) {
+  const url = new URL(request.url);
+  const token = url.searchParams.get("token");
+
+  if (!token || token !== env.DASHBOARD_TOKEN) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const stats = await getDashboardStats(env);
+  return new Response(JSON.stringify(stats), { headers: { "Content-Type": "application/json" } });
+}
+
+// ─────────────────────────────────────────────────────────────
 // Entry point
 // ─────────────────────────────────────────────────────────────
 
 export default {
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    // Dashboard endpoints (GET only)
+    if (request.method === "GET") {
+      if (path === "/dashboard") {
+        return serveDashboard(env);
+      }
+      if (path === "/api/dashboard/stats") {
+        return serveDashboardStats(request, env);
+      }
+      return new Response("NBA Props Bot Webhook OK ✅", { status: 200 });
+    }
+
+    // Telegram webhook (POST only)
     if (request.method !== "POST") {
       return new Response("NBA Props Bot Webhook OK ✅", { status: 200 });
     }
@@ -170,21 +437,28 @@ async function handleCommand(cmd, arg, chatId, env) {
 
   switch (cmd) {
     case "/start": {
-      if (!settings.chat_ids.includes(chatId)) {
+      const isNewUser = !settings.chat_ids.includes(chatId);
+      if (isNewUser) {
         settings.chat_ids.push(chatId);
         await saveSettings(settings, env);
+        await logEvent("user_join", { chatId }, env);
       }
 
       // Queue the /start message sequence (15s between each)
       await enqueueStart(chatId, env);
       await tgSend(chatId, "⏳ Bem-vindo! As mensagens chegam em breve...", env);
+      await logEvent("command", { command: "start", chatId }, env);
       break;
     }
 
     case "/stop": {
-      settings.chat_ids = settings.chat_ids.filter(id => id !== chatId);
-      await saveSettings(settings, env);
+      if (settings.chat_ids.includes(chatId)) {
+        settings.chat_ids = settings.chat_ids.filter(id => id !== chatId);
+        await saveSettings(settings, env);
+        await logEvent("user_leave", { chatId }, env);
+      }
       await tgSend(chatId, "🔕 Removido da lista de envio.\nUsa /start para voltar a receber picks.", env);
+      await logEvent("command", { command: "stop", chatId }, env);
       break;
     }
 
@@ -250,6 +524,11 @@ async function handleCommand(cmd, arg, chatId, env) {
 
     default:
       await tgSend(chatId, "Comando desconhecido. /help para ver todos.", env);
+  }
+
+  // Log all commands (except start/stop already logged)
+  if (!["start", "stop"].includes(cmd)) {
+    await logEvent("command", { command: cmd.replace("/", ""), chatId }, env);
   }
 }
 
