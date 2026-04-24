@@ -8,7 +8,8 @@ from __future__ import annotations
 import html
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from typing import Any
 
 import requests
@@ -36,6 +37,80 @@ MARKET_LABELS = {
 }
 
 SIDE_LABELS = {"Over": "Acima de", "Under": "Abaixo de"}
+
+# CTAs rotativos por mercado — mantém o link afiliado mas varia o copy.
+CTA_BY_MARKET = {
+    "player_points": [
+        "🎯 Aposta nos pontos com as melhores odds →",
+        "🔥 Melhor casa para apostas em pontos →",
+        "💯 Garante a tua odd de pontos aqui →",
+    ],
+    "player_rebounds": [
+        "🏀 Melhor casa para apostas em ressaltos →",
+        "🎯 Aposta nos ressaltos com a melhor odd →",
+        "📈 Sobe a odd dos ressaltos aqui →",
+    ],
+    "player_assists": [
+        "🎯 Aposta nas assistências com as melhores odds →",
+        "🤝 Melhor casa para apostas em assistências →",
+        "🔝 Odd de assistências imbatível aqui →",
+    ],
+    "player_threes": [
+        "🎯 Aposta já nos triplos com a melhor odd →",
+        "🏹 Melhor casa para apostas em triplos →",
+        "💫 Garante a tua odd de triplos aqui →",
+    ],
+    "player_blocks": [
+        "🛡️ Melhor casa para apostas em bloqueios →",
+        "🎯 Aposta nos bloqueios com as melhores odds →",
+    ],
+    "player_steals": [
+        "🥷 Melhor casa para apostas em roubos de bola →",
+        "🎯 Aposta nos roubos com a melhor odd →",
+    ],
+    "player_turnovers": [
+        "🎯 Aposta nos turnovers com a melhor odd →",
+        "🔁 Melhor casa para apostas em erros →",
+    ],
+    "player_points_rebounds_assists": [
+        "🎯 Aposta no combo PRA com a melhor odd →",
+        "🔥 Melhor casa para Pts+Reb+Ast →",
+    ],
+    "player_points_rebounds": [
+        "🎯 Aposta Pts+Reb com as melhores odds →",
+        "📊 Melhor casa para o combo Pts+Reb →",
+    ],
+    "player_points_assists": [
+        "🎯 Aposta Pts+Ast com as melhores odds →",
+        "📊 Melhor casa para o combo Pts+Ast →",
+    ],
+    "player_rebounds_assists": [
+        "🎯 Aposta Reb+Ast com as melhores odds →",
+        "📊 Melhor casa para o combo Reb+Ast →",
+    ],
+}
+CTA_DEFAULT = "🎯 Aposta aqui com as melhores odds →"
+
+
+def _cta_for(market: str, seed: str) -> str:
+    opts = CTA_BY_MARKET.get(market) or [CTA_DEFAULT]
+    # rotação determinística por (market + seed) para que picks diferentes rodem
+    idx = abs(hash(seed)) % len(opts)
+    return opts[idx]
+
+
+def _fmt_lisboa_time(iso_utc: str) -> str:
+    if not iso_utc:
+        return ""
+    try:
+        s = iso_utc.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        lx = dt.astimezone(ZoneInfo("Europe/Lisbon"))
+        return lx.strftime("%H:%M")
+    except Exception:
+        return ""
 
 HELP = """<b>🏀 NBA Props Bot — comandos</b>
 
@@ -124,11 +199,16 @@ def format_pick_card(pick: dict, index: int, total: int) -> str:
 
     team = html.escape(pick.get('player_team') or '')
     team_str = f" <i>({team})</i>" if team else ""
+    tipoff = _fmt_lisboa_time(pick.get("commence_time") or "")
+    tipoff_line = f"🕐 Início: <b>{tipoff} Lisboa</b>\n" if tipoff else ""
+
+    cta = _cta_for(pick["market"], f"{pick.get('player_name','')}|{pick['market']}|{pick.get('line','')}")
 
     return (
         f"━━━━━━━━━━━━━━━━━━━━━\n"
         f"🏀 <b>Pick {index}/{total}</b> · {pick.get('game_date','')}\n"
         f"🆚 {html.escape(pick.get('away_team',''))} @ {html.escape(pick.get('home_team',''))}\n"
+        f"{tipoff_line}"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
         f"\n"
         f"👤 <b>{html.escape(pick['player_name'])}</b>{team_str}\n"
@@ -144,7 +224,7 @@ def format_pick_card(pick: dict, index: int, total: int) -> str:
         f"💹 <b>EV: {ev_pct:+.1f}%</b>  {ev_bar}\n"
         f"📐 Kelly: <b>{kelly_pct:.1f}%</b> do bankroll\n"
         f"\n"
-        f"🎯 <a href=\"{AFFILIATE_URL}\"><b>Apostar com as melhores odds →</b></a>\n"
+        f"<a href=\"{AFFILIATE_URL}\"><b>{cta}</b></a>\n"
         f"\n"
         f"<i>⚠️ Não considera lesões ou rotações de último minuto.</i>"
     )
@@ -213,9 +293,12 @@ def format_results_card(picks: list[dict], date: str) -> str:
 # Send queue (called by send_queue.py every 15 min)
 # ─────────────────────────────────────────────────────────────
 
-def send_next_queued(batch: int = 3) -> bool:
-    """Send up to `batch` unsent picks per invocation (compensates GH Actions cron throttling)."""
-    today = datetime.now(timezone.utc).date().isoformat()
+def send_next_queued(batch: int = 1) -> bool:
+    """Send up to `batch` unsent picks per invocation. Skips picks whose game already started."""
+    now_utc = datetime.now(timezone.utc)
+    today = now_utc.date().isoformat()
+    # cutoff: não enviar se o jogo já começou (5 min de margem antes do tip-off)
+    cutoff_iso = (now_utc + timedelta(minutes=5)).isoformat()[:19]
     s = config.load()
     chat_ids = s.get("chat_ids", [])
     if not chat_ids:
@@ -224,7 +307,17 @@ def send_next_queued(batch: int = 3) -> bool:
 
     sent_any = False
     with db.connect() as conn:
-        unsent = db.unsent_picks_today(conn, today)
+        unsent_all = db.unsent_picks_today(conn, today)
+        # Filtra picks onde o jogo ainda não começou (ou sem commence_time).
+        unsent = []
+        for row in unsent_all:
+            ct = (dict(row).get("commence_time") or "").replace("Z", "")
+            if ct and ct <= cutoff_iso:
+                # jogo já começou — marca como sent para não voltar a tentar
+                db.mark_sent(conn, dict(row)["id"])
+                log.info("Skipped pick id=%s (game already started: %s)", dict(row)["id"], ct)
+                continue
+            unsent.append(row)
         total_today = len(db.today_picks(conn, today))
         if not unsent:
             log.info("No unsent picks for %s", today)

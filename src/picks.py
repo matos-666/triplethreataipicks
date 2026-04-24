@@ -128,6 +128,7 @@ def _process_event(event: odds.OddsEvent, settings: dict, conn) -> list[dict]:
                     continue
                 pick = {
                     "game_date": game_date,
+                    "commence_time": event.commence_time,
                     "event_id": event.event_id,
                     "home_team": event.home_team,
                     "away_team": event.away_team,

@@ -48,6 +48,7 @@ CREATE INDEX IF NOT EXISTS idx_picks_sent ON picks(sent_at);
 _MIGRATIONS = [
     "ALTER TABLE picks ADD COLUMN sent_at TEXT",
     "ALTER TABLE picks ADD COLUMN player_team TEXT",
+    "ALTER TABLE picks ADD COLUMN commence_time TEXT",
 ]
 
 
@@ -76,7 +77,7 @@ def insert_pick(conn: sqlite3.Connection, pick: dict[str, Any]) -> int | None:
         "created_at", "game_date", "event_id", "home_team", "away_team",
         "player_name", "player_team", "player_id", "market", "line", "side", "bookmaker",
         "decimal_odds", "american_odds", "model_prob", "market_prob", "ev",
-        "kelly", "model_mean", "model_std", "n_games",
+        "kelly", "model_mean", "model_std", "n_games", "commence_time",
     ]
     values = [pick.get(c) for c in cols]
     placeholders = ",".join("?" for _ in cols)
