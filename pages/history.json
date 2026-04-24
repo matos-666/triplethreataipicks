@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-04-23T17:56:53+00:00",
+  "generated_at": "2026-04-24T15:01:28+00:00",
   "summary": {
-    "total": 111,
-    "wins": 60,
-    "losses": 51,
+    "total": 125,
+    "wins": 68,
+    "losses": 57,
     "pushes": 0,
-    "units": 8.419999999999998
+    "units": 10.85
   },
   "picks": [
     {
@@ -33,7 +33,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 220,
@@ -60,7 +62,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 235,
@@ -87,7 +91,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 208,
@@ -114,7 +120,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 225,
@@ -141,7 +149,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 212,
@@ -168,7 +178,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 213,
@@ -195,7 +207,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 217,
@@ -222,7 +236,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": "2026-04-24T06:28:59Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 219,
@@ -249,7 +265,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": "2026-04-24T06:29:00Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 232,
@@ -276,7 +294,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": "2026-04-24T06:29:01Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 205,
@@ -303,7 +323,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 222,
@@ -330,7 +352,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 223,
@@ -357,7 +381,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 206,
@@ -384,7 +410,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 207,
@@ -411,7 +439,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 224,
@@ -438,7 +468,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 209,
@@ -465,7 +497,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 237,
@@ -492,7 +526,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 210,
@@ -519,7 +555,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 211,
@@ -546,7 +584,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 227,
@@ -573,7 +613,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 215,
@@ -600,7 +642,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 216,
@@ -627,7 +671,9 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 221,
@@ -651,10 +697,12 @@
       "model_mean": 2.5,
       "model_std": 1.51,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "WIN",
+      "actual_value": 2.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": "2026-04-23T21:08:45Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 226,
@@ -678,10 +726,12 @@
       "model_mean": 0.0,
       "model_std": 0.0,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "WIN",
+      "actual_value": 0.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": "2026-04-23T21:08:46Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 193,
@@ -705,10 +755,12 @@
       "model_mean": 1.9,
       "model_std": 1.37,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "WIN",
+      "actual_value": 1.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": "2026-04-23T21:08:47Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 194,
@@ -732,10 +784,12 @@
       "model_mean": 8.1,
       "model_std": 4.65,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "LOSS",
+      "actual_value": 2.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": "2026-04-23T23:33:05Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 195,
@@ -759,10 +813,12 @@
       "model_mean": 3.1,
       "model_std": 1.97,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "WIN",
+      "actual_value": 4.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": "2026-04-23T23:33:06Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 196,
@@ -786,10 +842,12 @@
       "model_mean": 2.0,
       "model_std": 1.89,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "WIN",
+      "actual_value": 2.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": "2026-04-23T23:33:07Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 197,
@@ -813,10 +871,12 @@
       "model_mean": 8.3,
       "model_std": 3.59,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "WIN",
+      "actual_value": 13.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 198,
@@ -840,10 +900,12 @@
       "model_mean": 3.9,
       "model_std": 1.97,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "WIN",
+      "actual_value": 4.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 199,
@@ -867,10 +929,12 @@
       "model_mean": 6.2,
       "model_std": 3.16,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "WIN",
+      "actual_value": 8.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 200,
@@ -894,10 +958,12 @@
       "model_mean": 3.8,
       "model_std": 1.48,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "LOSS",
+      "actual_value": 6.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 201,
@@ -921,10 +987,12 @@
       "model_mean": 5.3,
       "model_std": 2.41,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "LOSS",
+      "actual_value": 8.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 202,
@@ -948,10 +1016,12 @@
       "model_mean": 22.2,
       "model_std": 7.96,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "LOSS",
+      "actual_value": 14.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 203,
@@ -975,10 +1045,12 @@
       "model_mean": 0.8,
       "model_std": 1.03,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "LOSS",
+      "actual_value": 2.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 204,
@@ -1002,10 +1074,12 @@
       "model_mean": 1.5,
       "model_std": 1.96,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
-      "sent_at": null
+      "result": "LOSS",
+      "actual_value": 0.0,
+      "graded_at": "2026-04-24T15:01:28Z",
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 137,
@@ -1032,7 +1106,9 @@
       "result": "LOSS",
       "actual_value": 2.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": "2026-04-22T19:59:06Z"
+      "sent_at": "2026-04-22T19:59:06Z",
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 99,
@@ -1059,7 +1135,9 @@
       "result": "WIN",
       "actual_value": 4.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 146,
@@ -1086,7 +1164,9 @@
       "result": "WIN",
       "actual_value": 4.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 114,
@@ -1113,7 +1193,9 @@
       "result": "LOSS",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 103,
@@ -1140,7 +1222,9 @@
       "result": "LOSS",
       "actual_value": 2.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 150,
@@ -1167,7 +1251,9 @@
       "result": "LOSS",
       "actual_value": 2.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 164,
@@ -1194,7 +1280,9 @@
       "result": "WIN",
       "actual_value": 27.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 118,
@@ -1221,7 +1309,9 @@
       "result": "WIN",
       "actual_value": 27.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 123,
@@ -1248,7 +1338,9 @@
       "result": "LOSS",
       "actual_value": 4.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 124,
@@ -1275,7 +1367,9 @@
       "result": "WIN",
       "actual_value": 27.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 138,
@@ -1302,7 +1396,9 @@
       "result": "WIN",
       "actual_value": 2.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 133,
@@ -1329,7 +1425,9 @@
       "result": "LOSS",
       "actual_value": 6.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 116,
@@ -1356,7 +1454,9 @@
       "result": "LOSS",
       "actual_value": 4.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 119,
@@ -1383,7 +1483,9 @@
       "result": "LOSS",
       "actual_value": 10.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 136,
@@ -1410,7 +1512,9 @@
       "result": "WIN",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 134,
@@ -1437,7 +1541,9 @@
       "result": "LOSS",
       "actual_value": 7.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 115,
@@ -1464,7 +1570,9 @@
       "result": "LOSS",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 110,
@@ -1491,7 +1599,9 @@
       "result": "LOSS",
       "actual_value": 4.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 179,
@@ -1518,7 +1628,9 @@
       "result": "LOSS",
       "actual_value": 6.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 109,
@@ -1545,7 +1657,9 @@
       "result": "WIN",
       "actual_value": 4.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 107,
@@ -1572,7 +1686,9 @@
       "result": "WIN",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 177,
@@ -1599,7 +1715,9 @@
       "result": "WIN",
       "actual_value": 5.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 161,
@@ -1626,7 +1744,9 @@
       "result": "LOSS",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 153,
@@ -1653,7 +1773,9 @@
       "result": "WIN",
       "actual_value": 8.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 131,
@@ -1680,7 +1802,9 @@
       "result": "WIN",
       "actual_value": 5.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 132,
@@ -1707,7 +1831,9 @@
       "result": "LOSS",
       "actual_value": 11.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 106,
@@ -1734,7 +1860,9 @@
       "result": "WIN",
       "actual_value": 8.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 101,
@@ -1761,7 +1889,9 @@
       "result": "LOSS",
       "actual_value": 1.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 169,
@@ -1788,7 +1918,9 @@
       "result": "LOSS",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 140,
@@ -1815,7 +1947,9 @@
       "result": "WIN",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 102,
@@ -1842,7 +1976,9 @@
       "result": "WIN",
       "actual_value": 1.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 143,
@@ -1869,7 +2005,9 @@
       "result": "WIN",
       "actual_value": 0.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 141,
@@ -1896,7 +2034,9 @@
       "result": "WIN",
       "actual_value": 0.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 192,
@@ -1923,7 +2063,9 @@
       "result": "WIN",
       "actual_value": 0.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 145,
@@ -1950,7 +2092,9 @@
       "result": "WIN",
       "actual_value": 0.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 130,
@@ -1977,7 +2121,9 @@
       "result": "WIN",
       "actual_value": 8.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 166,
@@ -2004,7 +2150,9 @@
       "result": "WIN",
       "actual_value": 12.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 129,
@@ -2031,7 +2179,9 @@
       "result": "WIN",
       "actual_value": 5.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 142,
@@ -2058,7 +2208,9 @@
       "result": "WIN",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 120,
@@ -2085,7 +2237,9 @@
       "result": "WIN",
       "actual_value": 12.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 111,
@@ -2112,7 +2266,9 @@
       "result": "LOSS",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 135,
@@ -2139,7 +2295,9 @@
       "result": "WIN",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 122,
@@ -2166,7 +2324,9 @@
       "result": "LOSS",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 100,
@@ -2193,7 +2353,9 @@
       "result": "LOSS",
       "actual_value": 4.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 113,
@@ -2220,7 +2382,9 @@
       "result": "LOSS",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 112,
@@ -2247,7 +2411,9 @@
       "result": "LOSS",
       "actual_value": 11.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 191,
@@ -2274,7 +2440,9 @@
       "result": "WIN",
       "actual_value": 0.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 104,
@@ -2301,7 +2469,9 @@
       "result": "LOSS",
       "actual_value": 1.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 126,
@@ -2328,7 +2498,9 @@
       "result": "LOSS",
       "actual_value": 3.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 174,
@@ -2355,7 +2527,9 @@
       "result": "WIN",
       "actual_value": 9.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 128,
@@ -2382,7 +2556,9 @@
       "result": "WIN",
       "actual_value": 9.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 125,
@@ -2409,7 +2585,9 @@
       "result": "LOSS",
       "actual_value": 11.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 105,
@@ -2436,7 +2614,9 @@
       "result": "WIN",
       "actual_value": 1.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 167,
@@ -2463,7 +2643,9 @@
       "result": "LOSS",
       "actual_value": 11.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 139,
@@ -2490,7 +2672,9 @@
       "result": "WIN",
       "actual_value": 1.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 152,
@@ -2517,7 +2701,9 @@
       "result": "WIN",
       "actual_value": 1.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 144,
@@ -2544,7 +2730,9 @@
       "result": "WIN",
       "actual_value": 1.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 127,
@@ -2571,7 +2759,9 @@
       "result": "WIN",
       "actual_value": 18.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 117,
@@ -2598,7 +2788,9 @@
       "result": "LOSS",
       "actual_value": 16.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 108,
@@ -2625,7 +2817,9 @@
       "result": "LOSS",
       "actual_value": 0.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 121,
@@ -2652,7 +2846,9 @@
       "result": "WIN",
       "actual_value": 18.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 163,
@@ -2679,7 +2875,9 @@
       "result": "LOSS",
       "actual_value": 16.0,
       "graded_at": "2026-04-23T12:49:21Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 15,
@@ -2706,7 +2904,9 @@
       "result": "WIN",
       "actual_value": 8.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 10,
@@ -2733,7 +2933,9 @@
       "result": "WIN",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 30,
@@ -2760,7 +2962,9 @@
       "result": "WIN",
       "actual_value": 4.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 8,
@@ -2787,7 +2991,9 @@
       "result": "LOSS",
       "actual_value": 0.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 36,
@@ -2814,7 +3020,9 @@
       "result": "WIN",
       "actual_value": 3.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 44,
@@ -2841,7 +3049,9 @@
       "result": "LOSS",
       "actual_value": 6.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 11,
@@ -2868,7 +3078,9 @@
       "result": "LOSS",
       "actual_value": 1.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 39,
@@ -2895,7 +3107,9 @@
       "result": "LOSS",
       "actual_value": 5.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 18,
@@ -2922,7 +3136,9 @@
       "result": "LOSS",
       "actual_value": 8.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 16,
@@ -2949,7 +3165,9 @@
       "result": "LOSS",
       "actual_value": 4.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 24,
@@ -2976,7 +3194,9 @@
       "result": "LOSS",
       "actual_value": 4.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 1,
@@ -3003,7 +3223,9 @@
       "result": "WIN",
       "actual_value": 9.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 43,
@@ -3030,7 +3252,9 @@
       "result": "LOSS",
       "actual_value": 0.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 33,
@@ -3057,7 +3281,9 @@
       "result": "WIN",
       "actual_value": 3.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 13,
@@ -3084,7 +3310,9 @@
       "result": "WIN",
       "actual_value": 36.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 25,
@@ -3111,7 +3339,9 @@
       "result": "LOSS",
       "actual_value": 8.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 32,
@@ -3138,7 +3368,9 @@
       "result": "WIN",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 41,
@@ -3165,7 +3397,9 @@
       "result": "WIN",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 19,
@@ -3192,7 +3426,9 @@
       "result": "LOSS",
       "actual_value": 6.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 42,
@@ -3219,7 +3455,9 @@
       "result": "LOSS",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 12,
@@ -3246,7 +3484,9 @@
       "result": "LOSS",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 14,
@@ -3273,7 +3513,9 @@
       "result": "LOSS",
       "actual_value": 29.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 46,
@@ -3300,7 +3542,9 @@
       "result": "WIN",
       "actual_value": 5.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 23,
@@ -3327,7 +3571,9 @@
       "result": "LOSS",
       "actual_value": 6.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 26,
@@ -3354,7 +3600,9 @@
       "result": "LOSS",
       "actual_value": 29.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 47,
@@ -3381,7 +3629,9 @@
       "result": "WIN",
       "actual_value": 1.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 48,
@@ -3408,7 +3658,9 @@
       "result": "WIN",
       "actual_value": 1.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 27,
@@ -3435,7 +3687,9 @@
       "result": "WIN",
       "actual_value": 14.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 34,
@@ -3462,7 +3716,9 @@
       "result": "WIN",
       "actual_value": 4.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 5,
@@ -3489,7 +3745,9 @@
       "result": "LOSS",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 37,
@@ -3516,7 +3774,9 @@
       "result": "WIN",
       "actual_value": 14.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 9,
@@ -3543,7 +3803,9 @@
       "result": "WIN",
       "actual_value": 0.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 7,
@@ -3570,7 +3832,9 @@
       "result": "LOSS",
       "actual_value": 1.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 49,
@@ -3597,7 +3861,9 @@
       "result": "WIN",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 22,
@@ -3624,7 +3890,9 @@
       "result": "LOSS",
       "actual_value": 0.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 17,
@@ -3651,7 +3919,9 @@
       "result": "WIN",
       "actual_value": 12.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 38,
@@ -3678,7 +3948,9 @@
       "result": "WIN",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 28,
@@ -3705,7 +3977,9 @@
       "result": "LOSS",
       "actual_value": 7.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 35,
@@ -3732,7 +4006,9 @@
       "result": "WIN",
       "actual_value": 5.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 45,
@@ -3759,7 +4035,9 @@
       "result": "LOSS",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 6,
@@ -3786,7 +4064,9 @@
       "result": "WIN",
       "actual_value": 1.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 4,
@@ -3813,7 +4093,9 @@
       "result": "WIN",
       "actual_value": 5.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 31,
@@ -3840,7 +4122,9 @@
       "result": "LOSS",
       "actual_value": 5.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 29,
@@ -3867,7 +4151,9 @@
       "result": "LOSS",
       "actual_value": 5.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 3,
@@ -3894,7 +4180,9 @@
       "result": "LOSS",
       "actual_value": 4.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 20,
@@ -3921,7 +4209,9 @@
       "result": "WIN",
       "actual_value": 9.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 2,
@@ -3948,7 +4238,9 @@
       "result": "WIN",
       "actual_value": 3.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 40,
@@ -3975,7 +4267,9 @@
       "result": "WIN",
       "actual_value": 2.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     },
     {
       "id": 21,
@@ -4002,7 +4296,9 @@
       "result": "WIN",
       "actual_value": 10.0,
       "graded_at": "2026-04-22T12:18:41Z",
-      "sent_at": null
+      "sent_at": null,
+      "player_team": null,
+      "commence_time": null
     }
   ]
 }
