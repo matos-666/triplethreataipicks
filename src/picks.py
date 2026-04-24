@@ -90,8 +90,9 @@ def run() -> int:
     log.info("Found %d qualifying picks", len(picks))
     # Envia apenas o resumo — as picks individuais saem de 15 em 15 min via send_queue
     s2 = config.load()
+    has_bankroll = bool(s2.get("bankroll"))
     for cid in s2.get("chat_ids", []):
-        telegram_bot.send(int(cid), telegram_bot.format_daily_summary(picks))
+        telegram_bot.send(int(cid), telegram_bot.format_daily_summary(picks, has_bankroll=has_bankroll))
     return len(picks)
 
 

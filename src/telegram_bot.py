@@ -258,19 +258,27 @@ def _ev_bar(ev_pct: float) -> str:
     return "🟩" * filled + "⬜" * (10 - filled)
 
 
-def format_daily_summary(picks: list[dict]) -> str:
+def format_daily_summary(picks: list[dict], has_bankroll: bool = False) -> str:
     """Teaser sem revelar as picks — mantém suspense."""
     if not picks:
         return "🏀 <b>Sem picks hoje</b> acima do EV mínimo.\nTenta baixar o EV mínimo com /setev 0.03"
     today = picks[0].get("game_date", "hoje")
     best_ev = max(p["ev"] for p in picks) * 100
     markets = len({p["market"] for p in picks})
+    bankroll_reminder = ""
+    if not has_bankroll:
+        bankroll_reminder = (
+            f"\n<b>⚠️ Aviso:</b> Ainda não definiste bankroll!\n"
+            f"Sem ela, as picks não mostram <b>stake recomendada</b>.\n"
+            f"Usa <code>/setbankroll 500</code> agora!\n"
+        )
     return (
         f"🏀 <b>Picks do dia — {today}</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
         f"📬 <b>{len(picks)} pick(s)</b> selecionadas · {markets} mercados\n"
         f"💹 Melhor EV do dia: <b>+{best_ev:.1f}%</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"{bankroll_reminder}"
         f"⏳ A primeira pick chega daqui a <b>~10 min</b>.\n"
         f"⏱️ Depois recebes <b>uma a cada 10 min</b>, até todas serem reveladas.\n\n"
         f"<i>Fica atento 🔔</i>"
@@ -401,14 +409,15 @@ def _handle(text: str, chat_id: int, s: dict) -> bool:
         if chat_id not in s["chat_ids"]:
             s["chat_ids"].append(chat_id)
         send(chat_id, f"✅ <b>Bem-vindo ao NBA Props Bot!</b>\n"
-                      f"Vais receber picks diárias a partir das 14h Lisboa.\n\n"
-                      f"<b>⚡ Próximo passo:</b> Diz-me a tua bankroll para calcular stakes!\n"
-                      f"Ex: <code>/setbankroll 500</code>\n"
-                      f"(Ou mais tarde com /setbankroll ou /help para ver todos os comandos)")
-        if not s.get("bankroll"):
-            send(chat_id, "💼 <b>Como usar a sugestão de stakes:</b>\n"
-                          "O bot calcula a stake ideal usando <b>Kelly Criterion</b> baseado na tua bankroll.\n"
-                          "Isto ajuda a proteger o teu dinheiro e maximizar lucros a longo prazo.")
+                      f"Receberás picks diárias a partir das 14h Lisboa,\n"
+                      f"uma de 10 em 10 minutos com análise completa.")
+        send(chat_id, f"💼 <b>IMPORTANTE: Define a tua bankroll!</b>\n\n"
+                      f"Cada pick inclui a <b>stake recomendada</b> baseada em Kelly Criterion.\n"
+                      f"Isto é essencial para proteger o teu bankroll e maximizar lucros.\n\n"
+                      f"<b>Usa este comando:</b>\n"
+                      f"<code>/setbankroll 500</code>\n\n"
+                      f"<i>Substitui 500 pelo teu bankroll em euros.</i>")
+        send(chat_id, HELP)
         _send_today_or_history(chat_id)
         return True
 
