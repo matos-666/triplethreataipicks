@@ -113,6 +113,18 @@ async function getDashboardStats(env) {
   }, 0);
   const wr = (wins + losses) ? (wins / (wins + losses) * 100) : 0;
 
+  // Recent users (from user_join events, sorted by timestamp descending)
+  const userJoinEvents = events.filter(e => e.type === "user_join");
+  const recentUsers = userJoinEvents
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .slice(0, 10)
+    .map(e => ({
+      chatId: e.data?.chatId,
+      username: e.data?.username || "unknown",
+      languageCode: e.data?.languageCode || "unknown",
+      timestamp: e.timestamp,
+    }));
+
   return {
     totalUsers,
     totalUserJoins,
@@ -121,6 +133,7 @@ async function getDashboardStats(env) {
     commandCounts,
     dailyStats,
     picks: { total: picks.length, wins, losses, pushes, wr, units },
+    recentUsers,
     timestamp: new Date().toISOString(),
   };
 }
@@ -260,6 +273,16 @@ async function serveDashboard(env) {
       <div class="grid" id="stats"></div>
       <div class="charts" id="charts"></div>
       <div class="table">
+        <h2>Top 10 Usuários Recentes</h2>
+        <table>
+          <thead>
+            <tr><th>Username</th><th>País (Language)</th><th>Chat ID</th><th>Data</th></tr>
+          </thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+      </div>
+
+      <div class="table">
         <h2>Comandos Mais Usados</h2>
         <table>
           <thead>
@@ -283,6 +306,7 @@ async function serveDashboard(env) {
 
         renderStats(data);
         renderCharts(data);
+        renderUsers(data);
         renderCommands(data);
 
         document.getElementById('loading').style.display = 'none';
@@ -351,6 +375,21 @@ async function serveDashboard(env) {
       }, 100);
     }
 
+    function renderUsers(data) {
+      const users = (data.recentUsers || []).slice(0, 10);
+      const countryMap = {
+        'pt': '🇵🇹 Portugal', 'pt-BR': '🇧🇷 Brasil', 'pt-PT': '🇵🇹 Portugal',
+        'en': '🇬🇧 UK', 'en-US': '🇺🇸 USA', 'es': '🇪🇸 Spain', 'fr': '🇫🇷 France',
+        'de': '🇩🇪 Germany', 'it': '🇮🇹 Italy', 'unknown': '❓ Unknown'
+      };
+      const html = users.map(u => {
+        const country = countryMap[u.languageCode] || countryMap['unknown'];
+        const date = new Date(u.timestamp).toLocaleDateString('pt-PT');
+        return \`<tr><td>@\${u.username || 'anon'}</td><td>\${country}</td><td>\${u.chatId}</td><td>\${date}</td></tr>\`;
+      }).join('');
+      document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">Sem dados</td></tr>';
+    }
+
     function renderCommands(data) {
       const cmds = Object.entries(data.commandCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
       const html = cmds.map(([cmd, count]) => \`<tr><td>/\${cmd}</td><td>\${count}</td></tr>\`).join('');
@@ -414,9 +453,11 @@ export default {
       const parts = text.split(/\s+/);
       const cmd   = parts[0].toLowerCase().split("@")[0];
       const arg   = parts[1] || null;
+      const username = msg.from?.username || "unknown";
+      const languageCode = msg.from?.language_code || "unknown";
 
       // Run async without blocking the 200 OK to Telegram
-      ctx.waitUntil(handleCommand(cmd, arg, chatId, env));
+      ctx.waitUntil(handleCommand(cmd, arg, chatId, env, { username, languageCode }));
     } catch (e) {
       console.error("Worker error:", e);
     }
@@ -432,7 +473,7 @@ export default {
 // Command dispatcher
 // ─────────────────────────────────────────────────────────────
 
-async function handleCommand(cmd, arg, chatId, env) {
+async function handleCommand(cmd, arg, chatId, env, userInfo = {}) {
   const settings = await getSettings(env);
 
   switch (cmd) {
@@ -441,7 +482,13 @@ async function handleCommand(cmd, arg, chatId, env) {
       if (isNewUser) {
         settings.chat_ids.push(chatId);
         await saveSettings(settings, env);
-        await logEvent("user_join", { chatId }, env);
+
+        // Log user info from Telegram
+        await logEvent("user_join", {
+          chatId,
+          username: userInfo.username || "unknown",
+          languageCode: userInfo.languageCode || "unknown"
+        }, env);
       }
 
       // Queue the /start message sequence (15s between each)
