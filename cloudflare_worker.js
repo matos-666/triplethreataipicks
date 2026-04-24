@@ -37,6 +37,7 @@ const HELP = `<b>🏀 TripleThreat AI Picks — comandos</b>
 /setev &lt;num&gt; — EV mínimo (ex: /setev 0.05 = 5%)
 /setoddsmin &lt;num&gt; — odd mínima (ex: /setoddsmin 1.5)
 /setoddsmax &lt;num&gt; — odd máxima (ex: /setoddsmax 3.0)
+/setbankroll &lt;num&gt; — bankroll total (ex: /setbankroll 500 → stakes com Kelly)
 /stop — parar de receber picks
 /help — esta mensagem`;
 
@@ -88,9 +89,23 @@ async function handleCommand(cmd, arg, chatId, env) {
         `✅ <b>Bem-vindo ao TripleThreat AI Picks!</b>\n\n` +
         `🏀 Recebes picks diárias de NBA Props com base num modelo estatístico.\n` +
         `📬 As picks chegam às <b>14h Lisboa</b>, espaçadas ao longo do dia.\n` +
-        `📊 Resultados graduados às <b>12h do dia seguinte</b>.\n\n` + HELP, env);
+        `📊 Resultados graduados às <b>12h do dia seguinte</b>.`, env);
+
+      // Mensagem dedicada sobre bankroll (CRÍTICA para stake sizing)
+      await sleep(500);
+      await tgSend(chatId,
+        `💼 <b>IMPORTANTE: Define a tua bankroll!</b>\n\n` +
+        `Cada pick inclui a <b>stake recomendada</b> baseada em Kelly Criterion.\n` +
+        `Isto é essencial para proteger o teu bankroll e maximizar lucros.\n\n` +
+        `<b>Usa este comando:</b>\n` +
+        `<code>/setbankroll 500</code>\n\n` +
+        `<i>Substitui 500 pelo teu bankroll em euros.</i>`, env);
+
+      await sleep(500);
+      await tgSend(chatId, HELP, env);
+
       // Pequena pausa antes de mostrar picks/resultados
-      await sleep(1500);
+      await sleep(1000);
       await sendTodayOrHistory(chatId, env);
       break;
     }
@@ -144,6 +159,21 @@ async function handleCommand(cmd, arg, chatId, env) {
       settings.max_odds = parseFloat(arg);
       await saveSettings(settings, env);
       await tgSend(chatId, `✅ Odd máxima: <b>${arg}</b>`, env);
+      break;
+    }
+
+    case "/setbankroll": {
+      if (!arg) { await tgSend(chatId, "Uso: /setbankroll 500  (em euros)", env); break; }
+      try {
+        const br = parseFloat(arg);
+        settings.bankroll = br;
+        await saveSettings(settings, env);
+        await tgSend(chatId,
+          `✅ Bankroll guardada: <b>€${br.toFixed(2)}</b>\n\n` +
+          `Agora cada pick vai mostrar a stake sugerida (Kelly 12.5%).`, env);
+      } catch (e) {
+        await tgSend(chatId, "❌ Valor inválido. Ex: /setbankroll 500", env);
+      }
       break;
     }
 
@@ -278,12 +308,16 @@ function fmtConfig(settings) {
   const markets = (settings.markets || [])
     .map(m => `   • ${MARKET_LABELS[m] || m}`)
     .join("\n");
+  const bankrollLine = settings.bankroll
+    ? `💼 Bankroll: <b>€${settings.bankroll.toFixed(2)}</b>\n`
+    : "";
   return (
     `⚙️ <b>Configuração actual</b>\n` +
     `─────────────────────\n` +
     `📈 EV mínimo: <b>${(settings.min_ev * 100).toFixed(1)}%</b>\n` +
     `🎰 Odds: <b>${settings.min_odds} — ${settings.max_odds}</b>\n` +
-    `📐 Kelly fraction: <b>${settings.kelly_fraction}</b>\n` +
+    `📐 Kelly fraction: <b>${(settings.kelly_fraction * 100).toFixed(1)}%</b>\n` +
+    `${bankrollLine}` +
     `📋 Mercados:\n${markets}\n` +
     `─────────────────────\n` +
     `👥 Chats registados: ${(settings.chat_ids || []).length}`
