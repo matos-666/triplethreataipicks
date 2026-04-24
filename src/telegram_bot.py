@@ -236,24 +236,22 @@ def _ev_bar(ev_pct: float) -> str:
 
 
 def format_daily_summary(picks: list[dict]) -> str:
-    """Short summary sent when picks are queued — before individual sends start."""
+    """Teaser sem revelar as picks — mantém suspense."""
     if not picks:
         return "🏀 <b>Sem picks hoje</b> acima do EV mínimo.\nTenta baixar o EV mínimo com /setev 0.03"
     today = picks[0].get("game_date", "hoje")
-    top3 = picks[:3]
-    lines = [
-        f"🏀 <b>Picks do dia — {today}</b>",
-        f"📬 <b>{len(picks)} pick(s)</b> top-EV por mercado. Enviadas em lotes a cada poucos minutos.\n",
-        f"🔝 <b>Top 3 por EV:</b>",
-    ]
-    for i, p in enumerate(top3, 1):
-        market_label = MARKET_LABELS.get(p["market"], p["market"].replace("player_",""))
-        lines.append(
-            f"  {i}. {html.escape(p['player_name'])} {p['side']} {p['line']} {market_label} "
-            f"· EV <b>{p['ev']*100:+.1f}%</b> @ {p['decimal_odds']:.2f}"
-        )
-    lines.append(f"\n⏳ Primeira pick chega em breve...")
-    return "\n".join(lines)
+    best_ev = max(p["ev"] for p in picks) * 100
+    markets = len({p["market"] for p in picks})
+    return (
+        f"🏀 <b>Picks do dia — {today}</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📬 <b>{len(picks)} pick(s)</b> selecionadas · {markets} mercados\n"
+        f"💹 Melhor EV do dia: <b>+{best_ev:.1f}%</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"⏳ A primeira pick chega daqui a <b>~10 min</b>.\n"
+        f"⏱️ Depois recebes <b>uma a cada 10 min</b>, até todas serem reveladas.\n\n"
+        f"<i>Fica atento 🔔</i>"
+    )
 
 
 def format_results_card(picks: list[dict], date: str) -> str:

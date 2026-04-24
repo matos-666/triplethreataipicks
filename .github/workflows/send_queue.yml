@@ -2,8 +2,8 @@ name: Send Queued Picks
 
 on:
   schedule:
-    # De 5 em 5 minutos das 13:00 às 23:00 UTC (14h-00h Lisboa) — GH Actions cron é unreliable
-    - cron: "*/5 13-23 * * *"
+    # De 10 em 10 minutos das 13:00 às 23:00 UTC (14h-00h Lisboa)
+    - cron: "*/10 13-23 * * *"
   workflow_dispatch:
 
 permissions:
