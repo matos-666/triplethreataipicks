@@ -1,0 +1,14 @@
+name = "nba-props-bot"
+type = "javascript"
+main = "cloudflare_worker.js"
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[[kv_namespaces]]
+binding = "START_QUEUE"
+id = "your-kv-namespace-id-here"
+preview_id = "your-preview-kv-id-here"
+
+[[triggers.crons]]
+crons = ["*/5 * * * *"]

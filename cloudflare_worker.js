@@ -42,6 +42,91 @@ const HELP = `<b>🏀 TripleThreat AI Picks — comandos</b>
 /help — esta mensagem`;
 
 // ─────────────────────────────────────────────────────────────
+// /start Message Queue (KV-based, 15s between messages)
+// ─────────────────────────────────────────────────────────────
+
+async function enqueueStart(chatId, env) {
+  const queue = env.START_QUEUE;
+  if (!queue) {
+    console.error("START_QUEUE KV not configured");
+    return;
+  }
+  const key = `start:${chatId}:${Date.now()}`;
+  const task = {
+    chatId,
+    stage: 1,  // 1=welcome, 2=bankroll, 3=help, 4=picks
+    createdAt: Date.now(),
+  };
+  await queue.put(key, JSON.stringify(task), { expirationTtl: 600 }); // 10min expiry
+}
+
+async function processStartQueue(env) {
+  const queue = env.START_QUEUE;
+  if (!queue) return;
+
+  const keys = await queue.list();
+  for (const { name } of keys.keys || []) {
+    if (!name.startsWith("start:")) continue;
+
+    const data = await queue.get(name);
+    if (!data) continue;
+
+    const task = JSON.parse(data);
+    const now = Date.now();
+    const elapsed = now - task.createdAt;
+    const stage = task.stage || 1;
+    const settings = await getSettings(env);
+
+    // Each stage is 15s apart
+    const stageTime = (stage - 1) * 15000;
+    if (elapsed < stageTime) continue; // Not yet time
+
+    const chatId = task.chatId;
+
+    try {
+      switch (stage) {
+        case 1:
+          await tgSend(chatId,
+            `✅ <b>Bem-vindo ao TripleThreat AI Picks!</b>\n\n` +
+            `🏀 Recebes picks diárias de NBA Props com base num modelo estatístico.\n` +
+            `📬 As picks chegam às <b>14h Lisboa</b>, espaçadas ao longo do dia.\n` +
+            `📊 Resultados graduados às <b>12h do dia seguinte</b>.`, env);
+          task.stage = 2;
+          break;
+
+        case 2:
+          await tgSend(chatId,
+            `💼 <b>IMPORTANTE: Define a tua bankroll!</b>\n\n` +
+            `Cada pick inclui a <b>stake recomendada</b> baseada em Kelly Criterion.\n` +
+            `Isto é essencial para proteger o teu bankroll e maximizar lucros.\n\n` +
+            `<b>Usa este comando:</b>\n` +
+            `<code>/setbankroll 500</code>\n\n` +
+            `<i>Substitui 500 pelo teu bankroll em euros.</i>`, env);
+          task.stage = 3;
+          break;
+
+        case 3:
+          await tgSend(chatId, HELP, env);
+          task.stage = 4;
+          break;
+
+        case 4:
+          await sendTodayOrHistory(chatId, env);
+          // Done - delete from queue
+          await queue.delete(name);
+          continue;
+      }
+
+      // Update task with new stage
+      await queue.put(name, JSON.stringify(task), { expirationTtl: 600 });
+    } catch (e) {
+      console.error(`Start queue error for ${chatId}:`, e);
+      await queue.delete(name);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Entry point
 // ─────────────────────────────────────────────────────────────
 
@@ -70,6 +155,10 @@ export default {
     }
     return new Response("ok");
   },
+  async scheduled(event, env, ctx) {
+    // Process /start message queue every 5 seconds
+    await processStartQueue(env);
+  },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -85,31 +174,10 @@ async function handleCommand(cmd, arg, chatId, env) {
         settings.chat_ids.push(chatId);
         await saveSettings(settings, env);
       }
-      await tgSend(chatId,
-        `✅ <b>Bem-vindo ao TripleThreat AI Picks!</b>\n\n` +
-        `🏀 Recebes picks diárias de NBA Props com base num modelo estatístico.\n` +
-        `📬 As picks chegam às <b>14h Lisboa</b>, espaçadas ao longo do dia.\n` +
-        `📊 Resultados graduados às <b>12h do dia seguinte</b>.`, env);
 
-      // Pausa de 20s para leitura
-      await sleep(20000);
-
-      // Mensagem dedicada sobre bankroll (CRÍTICA para stake sizing)
-      await tgSend(chatId,
-        `💼 <b>IMPORTANTE: Define a tua bankroll!</b>\n\n` +
-        `Cada pick inclui a <b>stake recomendada</b> baseada em Kelly Criterion.\n` +
-        `Isto é essencial para proteger o teu bankroll e maximizar lucros.\n\n` +
-        `<b>Usa este comando:</b>\n` +
-        `<code>/setbankroll 500</code>\n\n` +
-        `<i>Substitui 500 pelo teu bankroll em euros.</i>`, env);
-
-      // Pausa de 25s para leitura
-      await sleep(25000);
-      await tgSend(chatId, HELP, env);
-
-      // Pausa de 20s antes de mostrar picks/resultados
-      await sleep(20000);
-      await sendTodayOrHistory(chatId, env);
+      // Queue the /start message sequence (15s between each)
+      await enqueueStart(chatId, env);
+      await tgSend(chatId, "⏳ Bem-vindo! As mensagens chegam em breve...", env);
       break;
     }
 
