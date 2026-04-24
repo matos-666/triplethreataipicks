@@ -18,5 +18,6 @@
   "min_ev": 0.1,
   "min_games_history": 5,
   "min_odds": 1.5,
-  "regions": "us"
+  "regions": "us",
+  "bankroll": 100
 }
