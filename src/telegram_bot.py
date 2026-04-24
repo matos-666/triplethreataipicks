@@ -122,28 +122,31 @@ def format_pick_card(pick: dict, index: int, total: int) -> str:
     # EV bar (visual indicator)
     ev_bar = _ev_bar(ev_pct)
 
+    team = html.escape(pick.get('player_team') or '')
+    team_str = f" <i>({team})</i>" if team else ""
+
     return (
-        f"─────────────────────\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
         f"🏀 <b>Pick {index}/{total}</b> · {pick.get('game_date','')}\n"
         f"🆚 {html.escape(pick.get('away_team',''))} @ {html.escape(pick.get('home_team',''))}\n"
-        f"─────────────────────\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
         f"\n"
-        f"👤 <b>{html.escape(pick['player_name'])}</b>\n"
+        f"👤 <b>{html.escape(pick['player_name'])}</b>{team_str}\n"
         f"📋 <b>{side_label} {pick['line']} {market_label}</b>\n"
-        f"🏦 <a href=\"{AFFILIATE_URL}\">{html.escape(pick.get('bookmaker','').upper())} · Odd {pick['decimal_odds']:.2f}</a>"
-        + (f" ({american_str})" if american_str else "") + "\n"
+        f"💰 <a href=\"{AFFILIATE_URL}\"><b>Melhor odd disponível: {pick['decimal_odds']:.2f}</b>"
+        + (f" ({american_str})" if american_str else "") + "</a>\n"
         f"\n"
         f"📊 <b>Análise do modelo</b> <i>({pick.get('n_games',0)} jogos)</i>\n"
-        f"   Média: <b>{pick.get('model_mean',0):.1f}</b> · Variação: ±{pick.get('model_std',0):.1f}\n"
-        f"   P(ganhar): <b>{model_pct:.0f}%</b> · Casa implica: {market_pct:.0f}%\n"
+        f"   Média histórica: <b>{pick.get('model_mean',0):.1f}</b> · Desvio: ±{pick.get('model_std',0):.1f}\n"
+        f"   P(acertar): <b>{model_pct:.0f}%</b> · Casa diz: {market_pct:.0f}%\n"
         f"   Edge: <b>{edge_pct:+.1f} pp</b>\n"
         f"\n"
-        f"💹 <b>Expected Value: {ev_pct:+.1f}%</b>  {ev_bar}\n"
-        f"📐 Kelly sugerido: <b>{kelly_pct:.1f}%</b> do bankroll\n"
+        f"💹 <b>EV: {ev_pct:+.1f}%</b>  {ev_bar}\n"
+        f"📐 Kelly: <b>{kelly_pct:.1f}%</b> do bankroll\n"
         f"\n"
-        f"🎯 <a href=\"{AFFILIATE_URL}\"><b>Apostar agora →</b></a>\n"
+        f"🎯 <a href=\"{AFFILIATE_URL}\"><b>Apostar com as melhores odds →</b></a>\n"
         f"\n"
-        f"<i>⚠️ Não considera lesões, rotações ou matchups de playoff.</i>"
+        f"<i>⚠️ Não considera lesões ou rotações de último minuto.</i>"
     )
 
 

@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS picks (
     home_team TEXT,
     away_team TEXT,
     player_name TEXT NOT NULL,
+    player_team TEXT,
     player_id INTEGER,
     market TEXT NOT NULL,
     line REAL NOT NULL,
@@ -44,7 +45,10 @@ CREATE INDEX IF NOT EXISTS idx_picks_result ON picks(result);
 CREATE INDEX IF NOT EXISTS idx_picks_sent ON picks(sent_at);
 """
 
-_MIGRATION = "ALTER TABLE picks ADD COLUMN sent_at TEXT"
+_MIGRATIONS = [
+    "ALTER TABLE picks ADD COLUMN sent_at TEXT",
+    "ALTER TABLE picks ADD COLUMN player_team TEXT",
+]
 
 
 def connect() -> sqlite3.Connection:
@@ -55,9 +59,11 @@ def connect() -> sqlite3.Connection:
     conn.executescript(_TABLE_SCHEMA)
     # Migrate old DBs — must happen before index creation.
     cols = {r[1] for r in conn.execute("PRAGMA table_info(picks)").fetchall()}
-    if "sent_at" not in cols:
-        conn.execute(_MIGRATION)
-        conn.commit()
+    for migration in _MIGRATIONS:
+        col = migration.split()[-2]  # e.g. "sent_at" or "player_team"
+        if col not in cols:
+            conn.execute(migration)
+    conn.commit()
     # Now safe to create indexes (sent_at already exists).
     conn.executescript(_INDEX_SCHEMA)
     return conn
@@ -68,7 +74,7 @@ def insert_pick(conn: sqlite3.Connection, pick: dict[str, Any]) -> int | None:
     pick.setdefault("created_at", datetime.utcnow().isoformat(timespec="seconds") + "Z")
     cols = [
         "created_at", "game_date", "event_id", "home_team", "away_team",
-        "player_name", "player_id", "market", "line", "side", "bookmaker",
+        "player_name", "player_team", "player_id", "market", "line", "side", "bookmaker",
         "decimal_odds", "american_odds", "model_prob", "market_prob", "ev",
         "kelly", "model_mean", "model_std", "n_games",
     ]

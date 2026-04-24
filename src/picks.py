@@ -108,6 +108,7 @@ def _process_event(event: odds.OddsEvent, settings: dict, conn) -> list[dict]:
         player_lines = odds.list_player_lines(outcomes)
         for player, line in player_lines:
             pid = stats.find_player_id(player)
+            player_team = stats.find_player_team(pid) if pid else ""
             if not pid:
                 log.debug("no player id for %s", player)
                 continue
@@ -131,6 +132,7 @@ def _process_event(event: odds.OddsEvent, settings: dict, conn) -> list[dict]:
                     "home_team": event.home_team,
                     "away_team": event.away_team,
                     "player_name": player,
+                    "player_team": player_team,
                     "player_id": pid,
                     "market": market,
                     "line": line,

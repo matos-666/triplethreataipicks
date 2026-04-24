@@ -87,30 +87,38 @@ def current_season() -> str:
 # ────────────────────────────────────────────────────────────────────
 
 @lru_cache(maxsize=1)
-def _player_index() -> dict[str, int]:
-    """Build {normalized_name: espn_athlete_id} from the 30 team rosters."""
+def _player_index() -> tuple[dict[str, int], dict[int, str]]:
+    """Build ({normalized_name: espn_id}, {espn_id: team_abbr}) from 30 rosters."""
     idx: dict[str, int] = {}
+    teams_map: dict[int, str] = {}
     teams = _get(f"{ESPN}/site/v2/sports/basketball/nba/teams", params={"limit": 50})
     if not teams:
-        return idx
+        return idx, teams_map
     team_list = teams["sports"][0]["leagues"][0]["teams"]
     for t in team_list:
         tid = t["team"]["id"]
+        abbr = t["team"].get("abbreviation", "")
         roster = _get(f"{ESPN}/site/v2/sports/basketball/nba/teams/{tid}/roster")
         if not roster:
             continue
         for a in roster.get("athletes", []):
             aid = int(a["id"])
+            teams_map[aid] = abbr
             names = [a.get("fullName"), a.get("displayName"), a.get("shortName")]
             for n in names:
                 if n:
                     idx[_normalize(n)] = aid
     log.info("ESPN player index built: %d entries", len(idx))
-    return idx
+    return idx, teams_map
+
+
+def find_player_team(player_id: int) -> str:
+    _, teams_map = _player_index()
+    return teams_map.get(player_id, "")
 
 
 def find_player_id(name: str) -> int | None:
-    idx = _player_index()
+    idx, _ = _player_index()
     n = _normalize(name)
     if n in idx:
         return idx[n]

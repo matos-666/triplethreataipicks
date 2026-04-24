@@ -170,18 +170,23 @@ async function sendTodayOrHistory(chatId, env) {
   if (todayPicks.length > 0) {
     const sent   = todayPicks.filter(p => p.sent_at).length;
     const unsent = todayPicks.length - sent;
+    const top3   = todayPicks.slice(0, 3);
 
-    let msg = `🏀 <b>Picks de hoje — ${today}</b>\n`;
-    msg    += `📬 ${todayPicks.length} pick(s)  |  ✅ Enviadas: ${sent}  |  ⏳ Em fila: ${unsent}\n\n`;
-    msg    += `<b>Lista completa:</b>\n`;
+    let msg = `🏀 <b>Picks do dia — ${today}</b>\n`;
+    msg    += `━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg    += `📬 <b>${todayPicks.length} picks</b> em fila · ✅ ${sent} enviadas\n\n`;
+    msg    += `🔝 <b>Top picks por EV:</b>\n`;
 
-    for (let i = 0; i < todayPicks.length; i++) {
-      const p  = todayPicks[i];
+    for (let i = 0; i < top3.length; i++) {
+      const p  = top3[i];
       const ml = MARKET_LABELS[p.market] || p.market.replace("player_", "");
-      const st = p.sent_at ? "✅" : "⏳";
-      msg += `${st} ${i + 1}. <b>${esc(p.player_name)}</b> ${p.side} ${p.line} ${ml}`;
-      msg += ` · EV <b>${(p.ev * 100).toFixed(1)}%</b> @ ${p.decimal_odds.toFixed(2)} (${p.bookmaker || ""})\n`;
+      const team = p.player_team ? ` (${p.player_team})` : "";
+      msg += `${i + 1}. <b>${esc(p.player_name)}</b>${team} — ${p.side} ${p.line} ${ml}`;
+      msg += ` · EV <b>${(p.ev * 100).toFixed(1)}%</b> @ ${p.decimal_odds.toFixed(2)}\n`;
     }
+
+    msg += `\n⏳ As picks chegam espaçadas ao longo do dia.\n`;
+    msg += `<a href="https://matos-666.github.io/triplethreataipicks/">📊 Ver todas as picks →</a>`;
 
     for (const chunk of splitMsg(msg)) await tgSend(chatId, chunk, env);
   } else {
