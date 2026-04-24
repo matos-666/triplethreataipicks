@@ -112,6 +112,19 @@ def _fmt_lisboa_time(iso_utc: str) -> str:
     except Exception:
         return ""
 
+
+def _suggested_stake(pick: dict, settings: dict) -> str:
+    """Calcula stake sugerida baseada em Kelly + bankroll."""
+    bankroll = settings.get("bankroll")
+    if not bankroll:
+        return ""
+    try:
+        kelly_pct = (pick.get("kelly") or 0) * 100
+        stake = (bankroll * kelly_pct / 100)
+        return f"💼 <b>Stake sugerida:</b> ~€{stake:.2f} (Kelly {kelly_pct:.1f}% de €{bankroll})"
+    except Exception:
+        return ""
+
 HELP = """<b>🏀 NBA Props Bot — comandos</b>
 
 /start — registar e ver as picks do dia
@@ -120,8 +133,9 @@ HELP = """<b>🏀 NBA Props Bot — comandos</b>
 /setev &lt;num&gt; — EV mínimo (ex: /setev 0.05 → 5%)
 /setoddsmin &lt;num&gt; — odd mínima (ex: /setoddsmin 1.5)
 /setoddsmax &lt;num&gt; — odd máxima (ex: /setoddsmax 3.0)
+/setbankroll &lt;num&gt; — bankroll total (ex: /setbankroll 1000 → sugestões de stake)
 /setmaxevents &lt;n&gt; — máx jogos/dia (poupa créditos API)
-/setkelly &lt;num&gt; — fracção Kelly (ex: /setkelly 0.25)
+/setkelly &lt;num&gt; — fracção Kelly (ex: /setkelly 0.1 → 10% Kelly)
 /markets — mercados disponíveis
 /addmarket &lt;key&gt; — adicionar mercado
 /rmmarket &lt;key&gt; — remover mercado
@@ -183,7 +197,7 @@ def _chunk_text(text: str) -> list[str]:
 # Pick card formatting  (one beautiful pick per message)
 # ─────────────────────────────────────────────────────────────
 
-def format_pick_card(pick: dict, index: int, total: int) -> str:
+def format_pick_card(pick: dict, index: int, total: int, bankroll: float | None = None) -> str:
     market_label = MARKET_LABELS.get(pick["market"], pick["market"].replace("player_", "").replace("_", "+"))
     side_label = SIDE_LABELS.get(pick["side"], pick["side"])
     ev_pct = pick["ev"] * 100
@@ -204,6 +218,15 @@ def format_pick_card(pick: dict, index: int, total: int) -> str:
 
     cta = _cta_for(pick["market"], f"{pick.get('player_name','')}|{pick['market']}|{pick.get('line','')}")
 
+    stake_line = ""
+    if bankroll:
+        try:
+            stake_pct = (pick.get("kelly") or 0) * 100
+            stake = (bankroll * stake_pct / 100)
+            stake_line = f"💼 <b>Stake:</b> ~€{stake:.2f} ({stake_pct:.1f}% de €{bankroll})\n"
+        except Exception:
+            pass
+
     return (
         f"━━━━━━━━━━━━━━━━━━━━━\n"
         f"🏀 <b>Pick {index}/{total}</b> · {pick.get('game_date','')}\n"
@@ -222,8 +245,8 @@ def format_pick_card(pick: dict, index: int, total: int) -> str:
         f"   Edge: <b>{edge_pct:+.1f} pp</b>\n"
         f"\n"
         f"💹 <b>EV: {ev_pct:+.1f}%</b>  {ev_bar}\n"
-        f"📐 Kelly: <b>{kelly_pct:.1f}%</b> do bankroll\n"
-        f"\n"
+        f"📐 Kelly: <b>{kelly_pct:.1f}%</b>\n"
+        f"{stake_line}"
         f"<a href=\"{AFFILIATE_URL}\"><b>{cta}</b></a>\n"
         f"\n"
         f"<i>⚠️ Não considera lesões ou rotações de último minuto.</i>"
@@ -324,7 +347,7 @@ def send_next_queued(batch: int = 1) -> bool:
         for offset, row in enumerate(to_send):
             pick = dict(row)
             index = total_today - len(unsent) + 1 + offset
-            msg = format_pick_card(pick, index, total_today)
+            msg = format_pick_card(pick, index, total_today, bankroll=s.get("bankroll"))
             for cid in chat_ids:
                 send(int(cid), msg)
             db.mark_sent(conn, pick["id"])
@@ -378,8 +401,14 @@ def _handle(text: str, chat_id: int, s: dict) -> bool:
         if chat_id not in s["chat_ids"]:
             s["chat_ids"].append(chat_id)
         send(chat_id, f"✅ <b>Bem-vindo ao NBA Props Bot!</b>\n"
-                      f"Vais receber picks diárias de <b>15 em 15 minutos</b> a partir das 14h Lisboa.\n\n"
-                      + HELP)
+                      f"Vais receber picks diárias a partir das 14h Lisboa.\n\n"
+                      f"<b>⚡ Próximo passo:</b> Diz-me a tua bankroll para calcular stakes!\n"
+                      f"Ex: <code>/setbankroll 500</code>\n"
+                      f"(Ou mais tarde com /setbankroll ou /help para ver todos os comandos)")
+        if not s.get("bankroll"):
+            send(chat_id, "💼 <b>Como usar a sugestão de stakes:</b>\n"
+                          "O bot calcula a stake ideal usando <b>Kelly Criterion</b> baseado na tua bankroll.\n"
+                          "Isto ajuda a proteger o teu dinheiro e maximizar lucros a longo prazo.")
         _send_today_or_history(chat_id)
         return True
 
@@ -421,6 +450,16 @@ def _handle(text: str, chat_id: int, s: dict) -> bool:
         s["max_odds"] = float(arg)
         send(chat_id, f"✅ Odd máxima: <b>{arg}</b>")
         return True
+    if cmd == "/setbankroll" and arg:
+        try:
+            bankroll = float(arg)
+            s["bankroll"] = bankroll
+            send(chat_id, f"✅ Bankroll guardada: <b>€{bankroll:.2f}</b>\n"
+                          f"Agora cada pick vai mostrar a stake sugerida (Kelly {s['kelly_fraction']*100:.1f}%).")
+            return True
+        except ValueError:
+            send(chat_id, "❌ Valor inválido. Ex: /setbankroll 500")
+            return False
     if cmd == "/setmaxevents" and arg:
         s["max_events_per_day"] = int(arg)
         send(chat_id, f"✅ Máx jogos/dia: <b>{arg}</b>")
@@ -512,13 +551,17 @@ def _send_today_or_history(chat_id: int) -> None:
 
 
 def _fmt_config(s: dict) -> str:
+    bankroll_str = ""
+    if s.get("bankroll"):
+        bankroll_str = f"💼 Bankroll: <b>€{s['bankroll']:.2f}</b>\n"
     return (
         "⚙️ <b>Configuração actual</b>\n"
         f"─────────────────────\n"
         f"📈 EV mínimo: <b>{s['min_ev']*100:.1f}%</b>\n"
         f"🎰 Odds: <b>{s['min_odds']} — {s['max_odds']}</b>\n"
         f"🏟️ Máx jogos/dia: <b>{s['max_events_per_day']}</b>\n"
-        f"📐 Kelly fraction: <b>{s['kelly_fraction']}</b>\n"
+        f"📐 Kelly fraction: <b>{s['kelly_fraction']*100:.1f}%</b>\n"
+        f"{bankroll_str}"
         f"📋 Mercados:\n" +
         "\n".join(f"   • {MARKET_LABELS.get(m, m)}" for m in s["markets"]) + "\n"
         f"─────────────────────\n"
