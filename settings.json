@@ -19,5 +19,5 @@
   "min_games_history": 5,
   "min_odds": 1.5,
   "regions": "us",
-  "bankroll": 100
+  "bankroll": 2000
 }
