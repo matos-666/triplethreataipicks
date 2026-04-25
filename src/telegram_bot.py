@@ -323,11 +323,25 @@ def format_results_card(picks: list[dict], date: str) -> str:
 # ─────────────────────────────────────────────────────────────
 
 def send_next_queued(batch: int = 1) -> bool:
-    """Send up to `batch` unsent picks per invocation. Skips picks whose game already started."""
+    """Send up to `batch` unsent picks per invocation.
+
+    Regras de envio:
+    - Não envia após as 23h Lisboa (hora local)
+    - Não envia picks cujo jogo já começou (commence_time <= now)
+    - Não envia picks sem commence_time (segurança: hora desconhecida = skip)
+    """
     now_utc = datetime.now(timezone.utc)
+    now_lisbon = now_utc.astimezone(ZoneInfo("Europe/Lisbon"))
     today = now_utc.date().isoformat()
-    # cutoff: não enviar se o jogo já começou (5 min de margem antes do tip-off)
-    cutoff_iso = (now_utc + timedelta(minutes=5)).isoformat()[:19]
+
+    # REGRA 1: Hard stop após as 23h Lisboa — nunca enviar de madrugada
+    if now_lisbon.hour >= 23:
+        log.info("Após as 23h Lisboa (%s) — sem envio de picks.", now_lisbon.strftime("%H:%M"))
+        return False
+
+    # cutoff: jogo considerado iniciado se commence_time <= agora
+    now_iso = now_utc.isoformat()[:19]
+
     s = config.load()
     chat_ids = s.get("chat_ids", [])
     if not chat_ids:
@@ -337,14 +351,19 @@ def send_next_queued(batch: int = 1) -> bool:
     sent_any = False
     with db.connect() as conn:
         unsent_all = db.unsent_picks_today(conn, today)
-        # Filtra picks onde o jogo ainda não começou (ou sem commence_time).
+        # Filtra picks onde o jogo ainda não começou.
         unsent = []
         for row in unsent_all:
             ct = (dict(row).get("commence_time") or "").replace("Z", "")
-            if ct and ct <= cutoff_iso:
-                # jogo já começou — marca como sent para não voltar a tentar
+            # REGRA 2: Sem commence_time → skip (hora desconhecida, não arriscar)
+            if not ct:
                 db.mark_sent(conn, dict(row)["id"])
-                log.info("Skipped pick id=%s (game already started: %s)", dict(row)["id"], ct)
+                log.info("Skipped pick id=%s (sem commence_time)", dict(row)["id"])
+                continue
+            # REGRA 3: Jogo já começou → skip
+            if ct <= now_iso:
+                db.mark_sent(conn, dict(row)["id"])
+                log.info("Skipped pick id=%s (jogo já iniciado: %s)", dict(row)["id"], ct)
                 continue
             unsent.append(row)
         total_today = len(db.today_picks(conn, today))
