@@ -52,7 +52,7 @@ async function logEvent(eventType, data, env) {
   const key = `event:${timestamp}:${Math.random()}`;
   const event = { type: eventType, data, timestamp };
   try {
-    await kv.put(key, JSON.stringify(event), { expirationTtl: 2592000 }); // 30 days
+    await kv.put(key, JSON.stringify(event), { expirationTtl: 86400 }); // 1 day
   } catch (e) {
     console.error("Analytics log error:", e);
   }
