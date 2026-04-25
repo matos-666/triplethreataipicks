@@ -1,0 +1,25 @@
+name: Check Odds API Quota
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check quota
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          python3 -c "
+          import os, requests
+          r = requests.get(
+              'https://api.the-odds-api.com/v4/sports/basketball_nba/events',
+              params={'apiKey': os.environ['ODDS_API_KEY']},
+              timeout=30,
+          )
+          print('Status:', r.status_code)
+          print('Remaining:', r.headers.get('x-requests-remaining'))
+          print('Used:', r.headers.get('x-requests-used'))
+          print('Last cost:', r.headers.get('x-requests-last'))
+          "
