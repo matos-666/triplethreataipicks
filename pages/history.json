@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-04-25T13:14:02+00:00",
+  "generated_at": "2026-04-25T20:46:09+00:00",
   "summary": {
-    "total": 125,
-    "wins": 68,
+    "total": 131,
+    "wins": 74,
     "losses": 57,
     "pushes": 0,
-    "units": 10.85
+    "units": 17.599999999999998
   },
   "picks": [
     {
@@ -120,7 +120,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T15:59:31Z",
       "player_team": "DET",
       "commence_time": "2026-04-25T17:10:00Z"
     },
@@ -178,7 +178,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T18:05:30Z",
       "player_team": "OKC",
       "commence_time": "2026-04-25T19:40:00Z"
     },
@@ -207,7 +207,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T15:59:29Z",
       "player_team": null,
       "commence_time": null
     },
@@ -236,7 +236,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T18:05:28Z",
       "player_team": "DET",
       "commence_time": "2026-04-25T17:10:00Z"
     },
@@ -265,7 +265,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T18:05:28Z",
       "player_team": "ORL",
       "commence_time": "2026-04-25T17:10:00Z"
     },
@@ -294,7 +294,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T20:01:56Z",
       "player_team": "PHX",
       "commence_time": "2026-04-25T19:40:00Z"
     },
@@ -323,7 +323,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T20:01:56Z",
       "player_team": "OKC",
       "commence_time": "2026-04-25T19:40:00Z"
     },
@@ -352,7 +352,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T18:05:28Z",
       "player_team": "DET",
       "commence_time": "2026-04-25T17:10:00Z"
     },
@@ -381,7 +381,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T15:59:29Z",
       "player_team": null,
       "commence_time": null
     },
@@ -410,7 +410,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T15:59:29Z",
       "player_team": null,
       "commence_time": null
     },
@@ -439,7 +439,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T15:59:29Z",
       "player_team": null,
       "commence_time": null
     },
@@ -468,7 +468,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T18:05:28Z",
       "player_team": "ORL",
       "commence_time": "2026-04-25T17:10:00Z"
     },
@@ -497,7 +497,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T15:59:29Z",
       "player_team": null,
       "commence_time": null
     },
@@ -526,7 +526,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T15:59:29Z",
       "player_team": null,
       "commence_time": null
     },
@@ -555,7 +555,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-25T18:05:28Z",
       "player_team": "ORL",
       "commence_time": "2026-04-25T17:10:00Z"
     },
@@ -639,9 +639,9 @@
       "model_mean": 9.7,
       "model_std": 3.09,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "WIN",
+      "actual_value": 11.0,
+      "graded_at": "2026-04-25T20:46:09Z",
       "sent_at": "2026-04-24T06:29:01Z",
       "player_team": null,
       "commence_time": null
@@ -697,9 +697,9 @@
       "model_mean": 3.2,
       "model_std": 0.79,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "WIN",
+      "actual_value": 4.0,
+      "graded_at": "2026-04-25T20:46:09Z",
       "sent_at": "2026-04-24T20:03:51Z",
       "player_team": null,
       "commence_time": null
@@ -784,9 +784,9 @@
       "model_mean": 9.7,
       "model_std": 3.09,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "WIN",
+      "actual_value": 11.0,
+      "graded_at": "2026-04-25T20:46:09Z",
       "sent_at": null,
       "player_team": null,
       "commence_time": null
@@ -842,9 +842,9 @@
       "model_mean": 4.7,
       "model_std": 0.67,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "WIN",
+      "actual_value": 0.0,
+      "graded_at": "2026-04-25T20:46:09Z",
       "sent_at": null,
       "player_team": null,
       "commence_time": null
@@ -958,9 +958,9 @@
       "model_mean": 7.5,
       "model_std": 2.01,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "WIN",
+      "actual_value": 7.0,
+      "graded_at": "2026-04-25T20:46:09Z",
       "sent_at": null,
       "player_team": null,
       "commence_time": null
@@ -987,9 +987,9 @@
       "model_mean": 0.9,
       "model_std": 0.57,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "WIN",
+      "actual_value": 1.0,
+      "graded_at": "2026-04-25T20:46:09Z",
       "sent_at": null,
       "player_team": null,
       "commence_time": null
