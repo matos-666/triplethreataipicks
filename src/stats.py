@@ -207,21 +207,30 @@ def fetch_player_recent(player_id: int, n: int = 20) -> PlayerRecent | None:
 # ────────────────────────────────────────────────────────────────────
 
 def find_game_id_by_date_and_teams(date_iso: str, home_team: str, away_team: str) -> str | None:
-    """Return ESPN event id for the NBA game matching date + teams."""
-    yyyymmdd = date_iso.replace("-", "")
-    sb = _get(f"{ESPN}/site/v2/sports/basketball/nba/scoreboard", params={"dates": yyyymmdd})
-    if not sb:
-        return None
+    """Return ESPN event id for the NBA game matching date + teams.
+
+    Tenta a data exata, depois -1 dia e +1 dia para acomodar diferenças de
+    timezone (ESPN usa ET; jogos começados tarde em UTC podem aparecer no dia
+    anterior na scoreboard ESPN).
+    """
+    from datetime import datetime, timedelta
     target_home = _normalize(home_team).split()[-1]
     target_away = _normalize(away_team).split()[-1]
-    for ev in sb.get("events", []):
-        comp = (ev.get("competitions") or [{}])[0]
-        names = " ".join(
-            _normalize(c.get("team", {}).get("displayName") or "")
-            for c in comp.get("competitors", [])
-        )
-        if target_home in names and target_away in names:
-            return ev["id"]
+    base = datetime.strptime(date_iso, "%Y-%m-%d")
+    # Try exact date first, then -1, +1
+    for delta in (0, -1, 1):
+        d = (base + timedelta(days=delta)).strftime("%Y%m%d")
+        sb = _get(f"{ESPN}/site/v2/sports/basketball/nba/scoreboard", params={"dates": d})
+        if not sb:
+            continue
+        for ev in sb.get("events", []):
+            comp = (ev.get("competitions") or [{}])[0]
+            names = " ".join(
+                _normalize(c.get("team", {}).get("displayName") or "")
+                for c in comp.get("competitors", [])
+            )
+            if target_home in names and target_away in names:
+                return ev["id"]
     return None
 
 
