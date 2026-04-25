@@ -11,7 +11,7 @@
 
 const REPO       = "matos-666/triplethreataipicks";
 const PAGES_URL  = "https://matos-666.github.io/triplethreataipicks/history.json";
-const AFFILIATE  = "https://track.affshares.com/visit/?bta=657658&nci=5687";
+const AFFILIATE  = "https://dashboard.onetwoaffiliates.com/click?campaign_id=797&ref_id=370";
 
 // ─────────────────────────────────────────────────────────────
 const MARKET_LABELS = {

@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 TG_API = "https://api.telegram.org/bot{token}/{method}"
 TG_MAX = 3800
-AFFILIATE_URL = "https://track.affshares.com/visit/?bta=657658&nci=5687"
+AFFILIATE_URL = "https://dashboard.onetwoaffiliates.com/click?campaign_id=797&ref_id=370"
 
 MARKET_LABELS = {
     "player_points": "Pontos",
