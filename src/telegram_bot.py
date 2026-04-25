@@ -229,7 +229,7 @@ def format_pick_card(pick: dict, index: int, total: int, bankroll: float | None 
 
     return (
         f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🏀 <b>Pick {index}/{total}</b> · {pick.get('game_date','')}\n"
+        f"🏀 {pick.get('game_date','')}\n"
         f"🆚 {html.escape(pick.get('away_team',''))} @ {html.escape(pick.get('home_team',''))}\n"
         f"{tipoff_line}"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
