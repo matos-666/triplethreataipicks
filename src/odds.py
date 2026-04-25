@@ -8,11 +8,14 @@ selected markets batched.
 """
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 from typing import Iterable
 
 import requests
+
+log = logging.getLogger(__name__)
 
 BASE = "https://api.the-odds-api.com/v4"
 SPORT = "basketball_nba"
@@ -40,6 +43,11 @@ class OddsEvent:
 def _get(url: str, params: dict, timeout: int = 30) -> requests.Response:
     r = requests.get(url, params=params, timeout=timeout)
     r.raise_for_status()
+    # Log API quota headers (the-odds-api returns these on every response)
+    remaining = r.headers.get("x-requests-remaining")
+    used = r.headers.get("x-requests-used")
+    if remaining is not None or used is not None:
+        log.info("Odds API quota — remaining: %s, used: %s", remaining, used)
     return r
 
 
