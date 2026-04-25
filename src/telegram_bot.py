@@ -334,9 +334,10 @@ def send_next_queued(batch: int = 1) -> bool:
     now_lisbon = now_utc.astimezone(ZoneInfo("Europe/Lisbon"))
     today = now_utc.date().isoformat()
 
-    # REGRA 1: Hard stop após as 23h Lisboa — nunca enviar de madrugada
-    if now_lisbon.hour >= 23:
-        log.info("Após as 23h Lisboa (%s) — sem envio de picks.", now_lisbon.strftime("%H:%M"))
+    # REGRA 1: Hard stop a partir das 00:00 Lisboa (= 23h UTC anterior)
+    # Permite envios até 23:59 Lisboa, bloqueia a partir da meia-noite
+    if now_lisbon.hour == 0:
+        log.info("Entre meia-noite e 01h Lisboa (%s) — sem envio de picks.", now_lisbon.strftime("%H:%M"))
         return False
 
     # cutoff: jogo considerado iniciado se commence_time <= agora

@@ -2,8 +2,9 @@ name: Send Queued Picks
 
 on:
   schedule:
-    # De 10 em 10 minutos das 13:00 às 23:00 UTC (14h-00h Lisboa)
-    - cron: "*/10 13-23 * * *"
+    # De 10 em 10 minutos das 13:00 às 22:50 UTC (14h-23h50 Lisboa)
+    # Nota: "13-22" significa 13:xx até 22:59; não inclui 23:xx
+    - cron: "*/10 13-22 * * *"
   workflow_dispatch:
 
 permissions:
