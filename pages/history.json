@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-04-28T10:02:01+00:00",
+  "generated_at": "2026-04-28T16:22:25+00:00",
   "summary": {
-    "total": 168,
+    "total": 169,
     "wins": 88,
-    "losses": 80,
+    "losses": 81,
     "pushes": 0,
-    "units": 15.07
+    "units": 14.07
   },
   "picks": [
     {
@@ -555,7 +555,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-28T10:10:45Z",
       "player_team": "BOS",
       "commence_time": "2026-04-28T23:10:00Z"
     },
@@ -787,7 +787,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-28T10:10:47Z",
       "player_team": "BOS",
       "commence_time": "2026-04-28T23:10:00Z"
     },
@@ -845,7 +845,7 @@
       "result": null,
       "actual_value": null,
       "graded_at": null,
-      "sent_at": null,
+      "sent_at": "2026-04-28T10:10:49Z",
       "player_team": "BOS",
       "commence_time": "2026-04-28T23:10:00Z"
     },
@@ -871,9 +871,9 @@
       "model_mean": 12.2,
       "model_std": 6.83,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "LOSS",
+      "actual_value": 2.0,
+      "graded_at": "2026-04-28T16:22:25Z",
       "sent_at": "2026-04-27T00:00:49Z",
       "player_team": "LAL",
       "commence_time": "2026-04-27T01:40:00Z"
