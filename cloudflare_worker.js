@@ -418,8 +418,55 @@ async function serveDashboardStats(request, env) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Broadcast newsletter
+// Broadcast picks message formatter
 // ─────────────────────────────────────────────────────────────
+
+function formatPicksMessage(picks, title = null) {
+  if (!picks || picks.length === 0) return null;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const lines = [title || ("🏀 <b>TripleThreat AI Picks — " + today + "</b>"), ""];
+
+  picks.forEach((p, i) => {
+    const ev = ((p.ev || 0) * 100).toFixed(0);
+    const market = MARKET_LABELS[p.market] || p.market.replace("player_", "");
+
+    // Format game time (commence_time is ISO 8601 UTC)
+    let gameTime = "";
+    if (p.commence_time) {
+      const dt = new Date(p.commence_time);
+      const hh = String(dt.getUTCHours()).padStart(2, "0");
+      const mm = String(dt.getUTCMinutes()).padStart(2, "0");
+      gameTime = ` @ ${hh}:${mm} UTC`;
+    }
+
+    const away = p.away_team ? p.away_team.split(" ").pop() : "?";
+    const home = p.home_team ? p.home_team.split(" ").pop() : "?";
+    const matchup = `${away} @ ${home}${gameTime}`;
+
+    lines.push(
+      `${i+1}️⃣ <b>${p.player_name}</b> ${p.side} ${p.line} ${market}`,
+      `   <i>${matchup}</i>`,
+      `   Odd: ${p.decimal_odds.toFixed(2)} | EV: <b>+${ev}%</b>`,
+      ""
+    );
+  });
+
+  lines.push("");
+  lines.push("➡️ <a href=\"https://matos-666.github.io/triplethreataipicks/\"><b>Ver análise completa</b></a>");
+  lines.push("💰 <a href=\"" + AFFILIATE + "\"><b>Apostar agora</b></a>");
+
+  return lines.join("\n");
+}
+
+async function broadcastPicksToUser(chatId, picks, env) {
+  try {
+    const message = formatPicksMessage(picks);
+    if (message) await tgSend(chatId, message, env);
+  } catch (e) {
+    console.error(`Failed to send picks to ${chatId}:`, e);
+  }
+}
 
 async function broadcastDailyPicksNewsletter(env) {
   try {
@@ -431,24 +478,8 @@ async function broadcastDailyPicksNewsletter(env) {
 
     if (todayPicks.length === 0) return;
 
-    // Format newsletter message
-    const lines = ["🏀 <b>TripleThreat AI Picks — " + today + "</b>", ""];
-
-    todayPicks.forEach((p, i) => {
-      const ev = ((p.ev || 0) * 100).toFixed(0);
-      const market = MARKET_LABELS[p.market] || p.market.replace("player_", "");
-      lines.push(
-        `${i+1}️⃣ <b>${p.player_name}</b> ${p.side} ${p.line} ${market}`,
-        `   Odd: ${p.decimal_odds.toFixed(2)} | EV: <b>+${ev}%</b>`,
-        ""
-      );
-    });
-
-    lines.push("");
-    lines.push("➡️ <a href=\"https://matos-666.github.io/triplethreataipicks/\"><b>Ver análise completa</b></a>");
-    lines.push("💰 <a href=\"" + AFFILIATE + "\"><b>Apostar agora</b></a>");
-
-    const message = lines.join("\n");
+    const message = formatPicksMessage(todayPicks);
+    if (!message) return;
 
     // Get chat IDs from settings
     const settings = await getSettings(env);
@@ -564,6 +595,19 @@ async function handleCommand(cmd, arg, chatId, env, userInfo = {}) {
       // Queue the /start message sequence (15s between each)
       await enqueueStart(chatId, env);
       await tgSend(chatId, "⏳ Bem-vindo! As mensagens chegam em breve...", env);
+
+      // Send today's picks after 50 seconds (after welcome sequence)
+      setTimeout(async () => {
+        const history = await fetchHistory();
+        if (history && history.picks) {
+          const today = new Date().toISOString().slice(0, 10);
+          const todayPicks = history.picks.filter(p => p.game_date === today);
+          if (todayPicks.length > 0) {
+            await broadcastPicksToUser(chatId, todayPicks, env);
+          }
+        }
+      }, 50000);
+
       await logEvent("command", { command: "start", chatId }, env);
       break;
     }
