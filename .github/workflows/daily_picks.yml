@@ -43,6 +43,13 @@ jobs:
           git diff --cached --quiet || git commit -m "daily picks: $(date -u +%Y-%m-%d)"
           git push || true
 
+      - name: Trigger broadcast newsletter
+        run: |
+          curl -X POST https://nba-props-bot.matos-ccf.workers.dev/broadcast-picks \
+            -H "Content-Type: application/json" \
+            -d '{"token":"broadcast"}' \
+            || echo "Webhook failed (non-critical)"
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

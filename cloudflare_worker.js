@@ -418,6 +418,62 @@ async function serveDashboardStats(request, env) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Broadcast newsletter
+// ─────────────────────────────────────────────────────────────
+
+async function broadcastDailyPicksNewsletter(env) {
+  try {
+    const history = await fetchHistory();
+    if (!history || !history.picks) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const todayPicks = history.picks.filter(p => p.game_date === today);
+
+    if (todayPicks.length === 0) return;
+
+    // Format newsletter message
+    const lines = ["🏀 <b>TripleThreat AI Picks — " + today + "</b>", ""];
+
+    todayPicks.forEach((p, i) => {
+      const ev = ((p.ev || 0) * 100).toFixed(0);
+      const market = MARKET_LABELS[p.market] || p.market.replace("player_", "");
+      lines.push(
+        `${i+1}️⃣ <b>${p.player_name}</b> ${p.side} ${p.line} ${market}`,
+        `   Odd: ${p.decimal_odds.toFixed(2)} | EV: <b>+${ev}%</b>`,
+        ""
+      );
+    });
+
+    lines.push("");
+    lines.push("➡️ <a href=\"https://matos-666.github.io/triplethreataipicks/\"><b>Ver análise completa</b></a>");
+    lines.push("💰 <a href=\"" + AFFILIATE + "\"><b>Apostar agora</b></a>");
+
+    const message = lines.join("\n");
+
+    // Get chat IDs from settings
+    const settings = await getSettings(env);
+    const chatIds = settings.chat_ids || [];
+
+    // Send to all subscribers
+    let sent = 0, failed = 0;
+    for (const chatId of chatIds) {
+      try {
+        await tgSend(chatId, message, env);
+        sent++;
+      } catch (e) {
+        failed++;
+        console.error(`Failed to send to ${chatId}:`, e);
+      }
+    }
+
+    console.log(`Newsletter sent: ${sent}/${chatIds.length} (${failed} failed)`);
+    await logEvent("newsletter_sent", { count: sent, failed }, env);
+  } catch (e) {
+    console.error("Broadcast newsletter error:", e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Entry point
 // ─────────────────────────────────────────────────────────────
 
@@ -435,6 +491,20 @@ export default {
         return serveDashboardStats(request, env);
       }
       return new Response("NBA Props Bot Webhook OK ✅", { status: 200 });
+    }
+
+    // Broadcast picks endpoint
+    if (request.method === "POST" && path === "/broadcast-picks") {
+      try {
+        const body = await request.json();
+        if (body.token === "broadcast") {
+          ctx.waitUntil(broadcastDailyPicksNewsletter(env));
+          return new Response(JSON.stringify({ ok: true }), { status: 200 });
+        }
+      } catch (e) {
+        console.error("Broadcast error:", e);
+      }
+      return new Response(JSON.stringify({ ok: false }), { status: 400 });
     }
 
     // Telegram webhook (POST only)
