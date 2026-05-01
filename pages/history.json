@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-04-30T16:10:45+00:00",
+  "generated_at": "2026-05-01T12:06:34+00:00",
   "summary": {
-    "total": 206,
-    "wins": 103,
-    "losses": 103,
+    "total": 212,
+    "wins": 106,
+    "losses": 106,
     "pushes": 0,
-    "units": 14.18
+    "units": 15.44
   },
   "picks": [
     {
@@ -349,9 +349,9 @@
       "model_mean": 11.3,
       "model_std": 7.56,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "LOSS",
+      "actual_value": 0.0,
+      "graded_at": "2026-05-01T12:06:33Z",
       "sent_at": null,
       "player_team": "LAL",
       "commence_time": "2026-04-30T02:10:00Z"
@@ -378,9 +378,9 @@
       "model_mean": 0.0,
       "model_std": 0.0,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "WIN",
+      "actual_value": 0.0,
+      "graded_at": "2026-05-01T12:06:34Z",
       "sent_at": null,
       "player_team": "NY",
       "commence_time": "2026-04-30T23:10:00Z"
@@ -407,9 +407,9 @@
       "model_mean": 4.8,
       "model_std": 3.46,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "LOSS",
+      "actual_value": 2.0,
+      "graded_at": "2026-05-01T12:06:33Z",
       "sent_at": null,
       "player_team": "LAL",
       "commence_time": "2026-04-30T02:10:00Z"
@@ -436,9 +436,9 @@
       "model_mean": 7.1,
       "model_std": 4.7,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "WIN",
+      "actual_value": 6.0,
+      "graded_at": "2026-05-01T12:06:34Z",
       "sent_at": null,
       "player_team": "NY",
       "commence_time": "2026-04-30T23:10:00Z"
@@ -465,9 +465,9 @@
       "model_mean": 5.5,
       "model_std": 2.92,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "WIN",
+      "actual_value": 10.0,
+      "graded_at": "2026-05-01T12:06:34Z",
       "sent_at": null,
       "player_team": "NY",
       "commence_time": "2026-04-30T23:10:00Z"
@@ -494,9 +494,9 @@
       "model_mean": 6.0,
       "model_std": 3.3,
       "n_games": 10,
-      "result": null,
-      "actual_value": null,
-      "graded_at": null,
+      "result": "LOSS",
+      "actual_value": 17.0,
+      "graded_at": "2026-05-01T12:06:33Z",
       "sent_at": null,
       "player_team": "LAL",
       "commence_time": "2026-04-30T02:10:00Z"
